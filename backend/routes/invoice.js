@@ -16,7 +16,10 @@ router.post("/upload-invoices", upload.single("file"), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ msg: "No file uploaded" });
     }
-
+    const pointsModeFromFrontend = req.body.pointsMode;
+    if (!pointsModeFromFrontend || !["PIECE", "AMOUNT"].includes(pointsModeFromFrontend)) {
+      return res.status(400).json({ msg: "Invalid points mode" });
+    }
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
@@ -60,7 +63,6 @@ router.post("/upload-invoices", upload.single("file"), async (req, res) => {
         const fromUser = req.user.id;
 
         // POINTS MODE AUTO-SET (You can change logic)
-        const pointsMode = "AMOUNT";  // Because excel has amount column
 
         // CREATE INVOICE
         await Invoice.create({
@@ -74,9 +76,10 @@ router.post("/upload-invoices", upload.single("file"), async (req, res) => {
           qty,
           uom,
           amount,
-          pointsMode
+          pointsMode: pointsModeFromFrontend
         });
-
+        product.uom = (product.uom || 0) - qty;
+        await product.save();
         success.push(row);
 
       } catch (err) {

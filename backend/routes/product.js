@@ -31,7 +31,8 @@ router.post("/upload-products", upload.single("file"), async (req, res) => {
           "Item Description": description,
           "BOM Type": bomType,
           "Sales UoM": salesUom,
-          "Box Quantity": boxQuantity
+          "Box Quantity": boxQuantity,
+          "Rewards": rewardsperunit
         } = row;
 
         // VALIDATION
@@ -47,11 +48,20 @@ router.post("/upload-products", upload.single("file"), async (req, res) => {
         }
 
         // CHECK IF PRODUCT ALREADY EXISTS
-        const exists = await Product.findOne({ itemNo });
-        if (exists) {
-          failed.push({ row, error: "Item already exists" });
+        const product = await Product.findOne({ itemNo });
+
+        if (product) {
+          // Box quantity increase logic
+          const oldQty = Number(product.boxQuantity || 0);
+          const newQty = Number(row["Box Quantity"] || 0);
+        
+          product.boxQuantity = oldQty + newQty;
+          await product.save();
+        
+          success.push({ row, msg: "Box quantity updated" });
           continue;
         }
+        
 
         // CREATE NEW PRODUCT
         const newProduct = new Product({
@@ -62,7 +72,8 @@ router.post("/upload-products", upload.single("file"), async (req, res) => {
           salesUom,
           boxQuantity,
           status: "Active",
-          uom: 0 // Stock default
+          uom: 0, // Stock default
+          rewardsperunit: rewardsperunit
         });
 
         await newProduct.save();

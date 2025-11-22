@@ -46,15 +46,16 @@ function App() {
   const renderDashboard = () => {
     switch (user.role) {
       case "Company":
-        return <CompanyDashboard />;
+        return <CompanyDashboard user={user} />;
       case "Distributor":
-        return <DistributorDashboard />;
+        return <DistributorDashboard user={user} />;
       case "Dealer":
-        return <DealerDashboard />;
+        return <DealerDashboard user={user} />;
       default:
-        return <div>Unknown Role</div>;
+        return null;
     }
   };
+  
 
   return (
 <Layout

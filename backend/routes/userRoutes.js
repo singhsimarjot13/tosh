@@ -4,9 +4,7 @@ import {
   loginCompany, 
   loginWithPhone,
   createDistributor, 
-  createDealer, 
-  getDistributors, 
-  getDealers, 
+  createDealer,  
   getAllDealers, 
   getProfile, 
   logout 
@@ -24,7 +22,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // -----------------------------
 // BULK DISTRIBUTOR CREATION
 // -----------------------------
-router.post("/upload-distributors", upload.single("file"), async (req, res) => {
+router.post("/upload-distributors",authMiddleware(["Company"]), upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ msg: "No file uploaded" });
@@ -110,11 +108,144 @@ router.get("/profile", authMiddleware(), getProfile);
 
 // Company routes
 router.post("/distributors", authMiddleware(["Company"]), createDistributor);
-router.get("/distributors", authMiddleware(["Company"]), getDistributors);
+// GET ALL DISTRIBUTORS (Only Company)
+router.get("/distributors", authMiddleware(["Company"]), async (req, res) => {
+  try {
+    const distributors = await User.find({ role: "Distributor" }).sort({ createdAt: -1 });
+
+    res.json({
+      distributors
+    });
+  } catch (err) {
+    console.error("GET DISTRIBUTORS ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 router.get("/dealers", authMiddleware(["Company"]), getAllDealers);
 
 // Distributor routes
 router.post("/dealers", authMiddleware(["Distributor"]), createDealer);
-router.get("/my-dealers", authMiddleware(["Distributor"]), getDealers);
+router.get("/my-dealers", authMiddleware(["Company", "Distributor"]), async (req, res) => {
+  try {
+    let dealers;
+
+    if (req.user.role === "Company") {
+      // Company can see all dealers
+      dealers = await User.find({ role: "Dealer" })
+        .populate("distributorID", "name bpCode")
+        .sort({ createdAt: -1 });
+
+    } else if (req.user.role === "Distributor") {
+      // Distributor sees only his dealers
+      dealers = await User.find({ 
+        role: "Dealer",
+        distributorID: req.user._id 
+      })
+      .populate("distributorID", "name bpCode")
+      .sort({ createdAt: -1 });
+    }
+
+    res.json({ dealers });
+
+  } catch (err) {
+    console.error("GET MY DEALERS ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+router.post(
+  "/upload-dealers",
+  authMiddleware(["Company", "Distributor"]),
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ msg: "No file uploaded" });
+      }
+
+      const user = req.user;
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+
+      const selectedDistributorBP = req.body.bpCode;   // <-- COMING FROM FRONTEND
+
+      let success = [];
+      let failed = [];
+
+      for (const row of rows) {
+        try {
+          const name = row["Name"];
+          const mobile = row["Mobile"];
+          const address = row["Address"];
+
+          if (!name || !mobile) {
+            failed.push({ row, error: "Missing name/mobile" });
+            continue;
+          }
+
+          let distributor;
+
+          if (user.role === "Distributor") {
+            // Distributor creating dealer → Auto assign
+            distributor = user;
+          } 
+          
+          else if (user.role === "Company") {
+            // Company must select BP Code from UI
+            if (!selectedDistributorBP) {
+              failed.push({ row, error: "Distributor BP Code missing" });
+              continue;
+            }
+
+            distributor = await User.findOne({
+              bpCode: selectedDistributorBP,
+              role: "Distributor"
+            });
+
+            if (!distributor) {
+              failed.push({ row, error: "Distributor not found for BP Code" });
+              continue;
+            }
+          }
+
+          // Now create dealer
+          const dealer = new User({
+            role: "Dealer",
+            name,
+            mobile,
+            address: address || "",
+            distributorID: distributor._id,
+            bpCode: distributor.bpCode,       // dealer inherits distributor BP Code
+            bpName: distributor.bpName,       // dealer inherits distributor BP Name
+            createdBy: user._id,
+            isActive: true
+          });
+
+          await dealer.save();
+          success.push(row);
+
+        } catch (err) {
+          failed.push({ row, error: err.message });
+        }
+      }
+
+      res.json({
+        msg: "Dealer upload complete",
+        successCount: success.length,
+        failedCount: failed.length,
+        success,
+        failed
+      });
+
+    } catch (error) {
+      console.error("DEALER UPLOAD ERROR:", error);
+      res.status(500).json({ msg: "Server error" });
+    }
+  }
+);
+
+
 
 export default router;

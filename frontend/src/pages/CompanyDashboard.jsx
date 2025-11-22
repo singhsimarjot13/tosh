@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { getDistributors, getAllDealers, createDistributor, getInvoiceSummary, getWalletSummary, uploadDistributors, uploadProducts, uploadInvoices } from "../api/api";
+import { getDistributors, getAllDealers, createDistributor, getInvoiceSummary, getWalletSummary, uploadDistributors, uploadProducts, uploadInvoices, uploadDealers } from "../api/api";
 import ProductManagement from "../components/ProductManagement";
 import WalletManagement from "../components/WalletManagement";
 import InvoiceManagement from "../components/InvoiceManagement";
 import ContentManagement from "../components/ContentManagement";
 import DashboardAnalytics from "../components/DashboardAnalytics";
 
-export default function CompanyDashboard() {
+export default function CompanyDashboard({user}) {
   const [distributors, setDistributors] = useState([]);
   const [dealers, setDealers] = useState([]);
   const [showDistributorForm, setShowDistributorForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [summary, setSummary] = useState(null);
+  const [invoicePointsMode, setInvoicePointsMode] = useState("AMOUNT");
+  const [selectedBPCode, setSelectedBPCode] = useState("");
+  const [selectedDistributor, setSelectedDistributor] = useState(null);
+
+
 
   useEffect(() => {
     loadData();
@@ -20,22 +25,31 @@ export default function CompanyDashboard() {
 
   const loadData = async () => {
     try {
-      const [distributorsRes, dealersRes, invoiceSummaryRes, walletSummaryRes] = await Promise.all([
-        getDistributors(),
-        getAllDealers(),
-        getInvoiceSummary(),
-        getWalletSummary()
-      ]);
+      // 1) Distributors
+      const distributorsRes = await getDistributors();
       setDistributors(distributorsRes.data.distributors);
+  
+      // 2) Dealers
+      const dealersRes = await getAllDealers();
       setDealers(dealersRes.data.dealers);
+  
+      // 3) Invoice Summary
+      const invoiceSummaryRes = await getInvoiceSummary();
+  
+      // 4) Wallet Summary
+      const walletSummaryRes = await getWalletSummary();
+  
+      // Set summary
       setSummary({
         invoices: invoiceSummaryRes.data,
         wallets: walletSummaryRes.data
       });
+  
     } catch (error) {
       console.error("Error loading data:", error);
     }
   };
+  
   const handleBulkDistributorUpload = async (file) => {
     try {
       setLoading(true);
@@ -49,6 +63,7 @@ export default function CompanyDashboard() {
       setLoading(false);
     }
   };
+  
   
   const handleBulkProductUpload = async (file) => {
     try {
@@ -64,10 +79,10 @@ export default function CompanyDashboard() {
     }
   };
   
-  const handleBulkInvoiceUpload = async (file) => {
+  const handleBulkInvoiceUpload = async (file, pointsMode) => {
     try {
       setLoading(true);
-      const res = await uploadInvoices(file);
+      const res = await uploadInvoices(file, pointsMode);
       alert(`✔ Invoice Upload Complete\nSuccess: ${res.data.successCount}\nFailed: ${res.data.failedCount}`);
       loadData();
     } catch (err) {
@@ -77,6 +92,7 @@ export default function CompanyDashboard() {
       setLoading(false);
     }
   };
+  
   const handleCreateDistributor = async (distributorData) => {
     setLoading(true);
     try {
@@ -89,6 +105,56 @@ export default function CompanyDashboard() {
       setLoading(false);
     }
   };
+  const uploadDealersFile = async (file) => {
+    if (!selectedDistributor) {
+      alert("Please select a distributor");
+      return;
+    }
+  
+    try {
+      setLoading(true);
+      const res = await uploadDealers(file, selectedDistributor);
+      alert(`✔ Dealers Uploaded\nSuccess: ${res.data.successCount}\nFailed: ${res.data.failedCount}`);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Dealer upload failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleBulkDealerUpload = async (file) => {
+    try {
+      setLoading(true);
+  
+      const form = new FormData();
+      form.append("file", file);
+  
+      // Company MUST select BP Code
+      if (user.role === "Company") {
+        if (!selectedBPCode) {
+          alert("Please select Distributor BP Code first");
+          return;
+        }
+        form.append("distributorBPCode", selectedBPCode);
+      }
+  
+      const res = await uploadDealers(form);
+  
+      alert(`✔ Dealer Upload Complete
+  Success: ${res.data.successCount}
+  Failed: ${res.data.failedCount}`);
+  
+      loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Dealer upload failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -363,17 +429,68 @@ export default function CompanyDashboard() {
 
     {/* Invoice Upload */}
     <label className="cursor-pointer border p-4 rounded-lg hover:bg-gray-50 transition">
-      <span className="flex items-center space-x-2 text-gray-700">
-        <span className="text-xl">📄</span>
-        <span>Upload Invoices</span>
-      </span>
-      <input
-        type="file"
-        accept=".xlsx,.xls,.csv"
-        className="hidden"
-        onChange={(e) => handleBulkInvoiceUpload(e.target.files[0])}
-      />
-    </label>
+  
+  {/* Dropdown for Points Mode */}
+  <div className="mb-2">
+    <label className="block text-sm text-gray-700 font-medium">Points Mode</label>
+    <select
+      value={invoicePointsMode}
+      onChange={(e) => setInvoicePointsMode(e.target.value)}
+      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm"
+    >
+      <option value="PIECE">Based on PIECES</option>
+      <option value="AMOUNT">Based on AMOUNT</option>
+    </select>
+  </div>
+
+  {/* File Upload */}
+  <span className="flex items-center space-x-2 text-gray-700">
+    <span className="text-xl">📄</span>
+    <span>Upload Invoices</span>
+  </span>
+
+  <input
+    type="file"
+    accept=".xlsx,.xls,.csv"
+    className="hidden"
+    onChange={(e) => handleBulkInvoiceUpload(e.target.files[0], invoicePointsMode)}
+  />
+</label>
+{/* Dealer Upload (Company chooses BP CODE) */}
+<label className="cursor-pointer border p-4 rounded-lg hover:bg-gray-50 transition">
+  {user.role === "Company" && (
+    <div className="mb-2">
+      <label className="block text-sm text-gray-700 font-medium">
+        Select Distributor (BP Code)
+      </label>
+      <select
+        onChange={(e) => setSelectedBPCode(e.target.value)}
+        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
+      >
+        <option value="">Select BP Code</option>
+        {distributors.map((d) => (
+          <option key={d._id} value={d.bpCode}>
+            {d.bpCode} — {d.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  )}
+
+  <span className="flex items-center space-x-2 text-gray-700">
+    <span className="text-xl">👥</span>
+    <span>Upload Dealers</span>
+  </span>
+
+  <input
+    type="file"
+    accept=".xlsx,.xls,.csv"
+    className="hidden"
+    onChange={(e) => handleBulkDealerUpload(e.target.files[0])}
+  />
+</label>
+
+
 
   </div>
 </div>
@@ -383,6 +500,7 @@ export default function CompanyDashboard() {
           {activeTab === 'invoices' && <InvoiceManagement />}
           {activeTab === 'content' && <ContentManagement />}
           {activeTab === 'analytics' && <DashboardAnalytics />}
+          {activeTab === 'distributors' && (
             <div>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-medium text-gray-900">Distributors</h2>
@@ -401,7 +519,7 @@ export default function CompanyDashboard() {
                   loading={loading}
                 />
               )}
-
+              
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {distributors.map(distributor => (
                   <div key={distributor._id} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -423,18 +541,19 @@ export default function CompanyDashboard() {
                             <span className="text-primary-500">📱</span>
                             <span>{distributor.mobile}</span>
                           </div>
-                          {distributor.email && (
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <span className="text-primary-500">✉️</span>
-                              <span>{distributor.email}</span>
-                            </div>
-                          )}
-                          {distributor.address && (
+                         {/* BP Code Always Show */}
+  <div className="flex items-center space-x-2 text-sm text-gray-600">
+    <span className="text-primary-500">🏷️</span>
+    <span>BP Code: {distributor.bpCode}</span>
+  </div>
+                          {distributor.billToState && (
                             <div className="flex items-center space-x-2 text-sm text-gray-600">
                               <span className="text-primary-500">📍</span>
-                              <span className="truncate">{distributor.address}</span>
+                              <span className="truncate">{distributor.billToState}</span>
                             </div>
                           )}
+
+                         
                         </div>
                       </div>
                     </div>
@@ -450,13 +569,14 @@ export default function CompanyDashboard() {
                 ))}
               </div>
             </div>
+              )}
           
 
           {activeTab === 'dealers' && (
             <div>
               <h2 className="text-lg font-medium text-gray-900 mb-6">All Dealers</h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {dealers.map(dealer => (
+                {dealers.filter(d => d.role === "Dealer") .map(dealer => (
                   <div key={dealer._id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

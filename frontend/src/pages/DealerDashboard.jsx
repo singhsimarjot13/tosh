@@ -3,7 +3,7 @@ import { getWalletBalance, getWalletTransactions, getUserInvoices } from "../api
 import ProductsView from "../components/ProductsView";
 import ContentView from "../components/ContentView";
 
-export default function DealerDashboard() {
+export default function DealerDashboard({user}) {
   const [activeTab, setActiveTab] = useState('overview');
   const [walletBalance, setWalletBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);

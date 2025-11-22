@@ -24,9 +24,6 @@ const UserSchema = new mongoose.Schema({
   // Status
   isActive: { type: Boolean, default: true },
   
-  // Additional fields
-  companyName: { type: String }, // For distributors and dealers
-  businessType: { type: String }, // For distributors and dealers
   // Dealer reward cap set by distributor (max distributor can transfer per invoice)
   dealerRewardLimit: { type: Number, default: 0 }
   

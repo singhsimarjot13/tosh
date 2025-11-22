@@ -164,11 +164,20 @@ export const uploadProducts = (file) => {
   });
 };
 
-export const uploadInvoices = (file) => {
+export const uploadInvoices = (file, pointsMode) => {
   const formData = new FormData();
   formData.append("file", file);
-  return api.post("/invoice/upload-invoices", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
+  formData.append("pointsMode", pointsMode);
+
+  return axios.post("/api/invoice/upload-invoices", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    withCredentials: true  // because JWT is in cookie
   });
 };
+export const uploadDealers = (form) =>
+  api.post("/bulk/upload-dealers", form, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+
+
 export default api;

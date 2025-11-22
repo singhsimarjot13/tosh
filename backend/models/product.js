@@ -28,7 +28,8 @@ const ProductSchema = new mongoose.Schema({
   // Stock quantity (optional)
   uom: { type: Number, default: 0 },
 
-  status: { type: String, enum: ["Active", "Inactive"], default: "Active" }
+  status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
+  rewardsperunit: { type: Number, default: 0 }, // Rewards per unit
 
 }, { timestamps: true });
 

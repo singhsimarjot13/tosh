@@ -175,18 +175,7 @@ export const createDealer = async (req, res) => {
 };
 
 // Get all distributors (Company can see all)
-export const getDistributors = async (req, res) => {
-  try {
-    const distributors = await User.find({ role: "Distributor", isActive: true })
-      .select('-password')
-      .sort({ createdAt: -1 });
 
-    res.json({ distributors });
-  } catch (error) {
-    console.error('Get distributors error:', error);
-    res.status(500).json({ msg: "Server error" });
-  }
-};
 
 // Get dealers for a distributor
 export const getDealers = async (req, res) => {

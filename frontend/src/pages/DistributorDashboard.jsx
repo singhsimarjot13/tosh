@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { getDealers, createDealer, getWalletBalance, getWalletTransactions, getUserInvoices, distributorDeductDealer } from "../api/api";
+import { getDealers, createDealer, getWalletBalance, getWalletTransactions, getUserInvoices, distributorDeductDealer, uploadDealers } from "../api/api";
 import ProductsView from "../components/ProductsView";
 import InvoiceManagement from "../components/InvoiceManagement";
 import ContentView from "../components/ContentView";
 
-export default function DistributorDashboard() {
+export default function DistributorDashboard({user}) {
   const [dealers, setDealers] = useState([]);
   const [showDealerForm, setShowDealerForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -90,7 +90,20 @@ export default function DistributorDashboard() {
       setLoading(false);
     }
   };
-
+  const handleDistributorBulkDealerUpload = async (file) => {
+    setLoading(true);
+    try {
+      const res = await uploadDealers(file); // no distributorID required
+      alert(`✔ Dealer Upload Complete\nSuccess: ${res.data.successCount}\nFailed: ${res.data.failedCount}`);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload dealers");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
@@ -304,6 +317,21 @@ export default function DistributorDashboard() {
                   Add Dealer
                 </button>
               </div>
+              {/* Bulk Upload Dealers */} 
+<label className="cursor-pointer border p-4 rounded-lg hover:bg-gray-50 transition">
+  <span className="flex items-center space-x-2 text-gray-700">
+    <span className="text-xl">📥</span>
+    <span>Upload Dealers</span>
+  </span>
+
+  <input
+    type="file"
+    accept=".xlsx,.xls,.csv"
+    className="hidden"
+    onChange={(e) => handleDistributorBulkDealerUpload(e.target.files[0])}
+  />
+</label>
+
 
               {showDealerForm && (
                 <DealerForm 
