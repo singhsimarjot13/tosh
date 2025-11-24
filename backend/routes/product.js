@@ -26,7 +26,7 @@ const toNumber = (value, fallback = 0) => {
       .replace(/pcs?/gi, "")
       .trim();
   }
-
+// to number function
   const parsed = Number(normalizedValue);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
