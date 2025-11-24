@@ -308,10 +308,6 @@ export default function InvoiceManagement() {
    const handleSubmit = (e) => {
     e.preventDefault();
      const qtyNum = parseInt(formData.qty);
-     if (selectedProduct && typeof selectedProduct.uom === 'number' && qtyNum > selectedProduct.uom) {
-       alert(`Quantity exceeds available. Available: ${selectedProduct.uom}`);
-       return;
-     }
      const payload = {
       toUser: formData.toUser,
       productID: formData.productID,
@@ -324,6 +320,15 @@ export default function InvoiceManagement() {
   };
 
    const selectedProduct = products.find(p => p._id === formData.productID);
+   const selectedProductRewardsPerPc = selectedProduct
+    ? (selectedProduct.rewardsPerPc ?? selectedProduct.pointsPerUnit ?? 0)
+    : 0;
+   const selectedProductRewardsForBox = selectedProduct
+    ? (selectedProduct.rewardsForBox ?? selectedProductRewardsPerPc * (selectedProduct.boxQuantity || 0))
+    : 0;
+   const selectedProductRewardsForCarton = selectedProduct
+    ? (selectedProduct.rewardsForCarton ?? selectedProductRewardsPerPc * (selectedProduct.cartonQuantity || 0))
+    : 0;
    const selectedUser = users.find(u => u._id === formData.toUser);
    const isDealerTarget = selectedUser?.role === 'Dealer';
 
@@ -361,11 +366,14 @@ export default function InvoiceManagement() {
                 className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               >
                 <option value="">Select product</option>
-                 {products.map(product => (
-                   <option key={product._id} value={product._id}>
-                     {product.name} ({product.pointsPerUnit} pts){typeof product.uom === 'number' ? ` • Avl: ${product.uom}` : ''}
-                   </option>
-                 ))}
+                 {products.map(product => {
+                   const rewardsPerPc = product.rewardsPerPc ?? product.pointsPerUnit ?? 0;
+                   return (
+                     <option key={product._id} value={product._id}>
+                       {(product.itemDescription || product.name)} ({rewardsPerPc} pts/pc)
+                     </option>
+                   );
+                 })}
               </select>
             </div>
             
@@ -378,7 +386,6 @@ export default function InvoiceManagement() {
                 onChange={handleChange}
                 required
                 min="1"
-                 max={selectedProduct && typeof selectedProduct.uom === 'number' ? selectedProduct.uom : undefined}
                  className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
             </div>
@@ -387,15 +394,14 @@ export default function InvoiceManagement() {
               <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-primary-800 mb-2">Invoice Summary</h4>
                  <div className="text-sm text-primary-700">
-                  <div>Product: {selectedProduct.name}</div>
+                  <div>Product: {selectedProduct.itemDescription || selectedProduct.name}</div>
                   <div>Quantity: {formData.qty}</div>
-                  <div>Points per Unit: {selectedProduct.pointsPerUnit}</div>
+                  <div>Rewards per Piece: {selectedProductRewardsPerPc}</div>
+                  <div>Rewards per Box: {selectedProductRewardsForBox}</div>
+                  <div>Rewards per Carton: {selectedProductRewardsForCarton}</div>
                   <div className="font-semibold mt-2">
-                    Earned Points: {(formData.qty * selectedProduct.pointsPerUnit).toLocaleString()}
+                    Earned Points: {(formData.qty * selectedProductRewardsPerPc).toLocaleString()}
                   </div>
-                   {typeof selectedProduct.uom === 'number' && (
-                     <div className="mt-1 text-xs">Available Qty: {selectedProduct.uom}</div>
-                   )}
                 </div>
               </div>
             )}
