@@ -23,34 +23,53 @@ export default function DistributorDashboard({user}) {
 
   const loadData = async () => {
     try {
-      const [dealersRes, balanceRes, transactionsRes, invoicesRes] = await Promise.all([
-        getDealers(),
-        getWalletBalance(),
-        getWalletTransactions(),
-        getUserInvoices('received')
-      ]);
+      const dealersRes = await getDealers();
       setDealers(dealersRes.data.dealers);
+    } catch (err) {
+      console.error("Dealers Fetch Error:", err);
+    }
+  
+    try {
+      const balanceRes = await getWalletBalance();
       setWalletBalance(balanceRes.data.balance);
+    } catch (err) {
+      console.error("Wallet Balance Error:", err);
+    }
+  
+    try {
+      const transactionsRes = await getWalletTransactions();
       setTransactions(transactionsRes.data.transactions);
+    } catch (err) {
+      console.error("Transactions Error:", err);
+    }
+  
+    try {
+      const invoicesRes = await getUserInvoices("received");
       const inv = invoicesRes.data.invoices || [];
-      setInvoices(inv);
-      // Aggregate bought products
+  
+      // Process invoices
       const map = new Map();
       inv.forEach(i => {
         const id = i.productID?._id || i.productID;
-        const name = i.productID?.name || '-';
+        const name = i.productID?.name || "-";
         const key = String(id);
         const entry = map.get(key) || { productId: key, productName: name, totalQty: 0, lastDate: null };
+  
         entry.totalQty += Number(i.qty || 0);
         const d = new Date(i.date);
         if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
+  
         map.set(key, entry);
       });
+  
+      setInvoices(inv);
       setBoughtProducts(Array.from(map.values()));
-    } catch (error) {
-      console.error("Error loading data:", error);
+  
+    } catch (err) {
+      console.error("Invoices Error:", err);
     }
   };
+  
 
 	const openDeductModal = (dealer) => {
 		setDeductForm({ dealerId: dealer._id, points: '', note: '' });

@@ -13,10 +13,9 @@ const UserSchema = new mongoose.Schema({
   // Hierarchy relationships
   distributorID: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // For dealers only
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Who created this user
-  bpCode: { type: String , unique: true},          // BP Code
+  bpCode: { type: String},          // BP Code
   bpName: { type: String },          // BP Name     // Mobile Phone
-  billToState: { type: String },     // Bill-to State
-
+  billToState: { type: String },             // Bill-to State
   // Authentication fields
   username: { type: String, unique: true, sparse: true }, // For Company login
   password: { type: String }, // Hashed password

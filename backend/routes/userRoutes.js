@@ -122,7 +122,27 @@ router.get("/distributors", authMiddleware(["Company"]), async (req, res) => {
   }
 });
 
-router.get("/dealers", authMiddleware(["Company"]), getAllDealers);
+router.get(
+  "/dealers",
+  authMiddleware(["Company"]),
+  async (req, res) => {
+    try {
+      const dealers = await User.find({ role: "Dealer" })
+        .populate("distributorID", "name bpCode bpName mobile");
+
+      res.json({
+        msg: "All dealers fetched",
+        count: dealers.length,
+        dealers
+      });
+
+    } catch (err) {
+      console.error("FETCH ALL DEALERS ERROR:", err);
+      res.status(500).json({ msg: "Server error" });
+    }
+  }
+);
+
 
 // Distributor routes
 router.post("/dealers", authMiddleware(["Distributor"]), createDealer);
@@ -140,12 +160,12 @@ router.get("/my-dealers", authMiddleware(["Company", "Distributor"]), async (req
       // Distributor sees only his dealers
       dealers = await User.find({ 
         role: "Dealer",
-        distributorID: req.user._id 
+        distributorID:req.user.id,
       })
-      .populate("distributorID", "name bpCode")
       .sort({ createdAt: -1 });
     }
-
+    console.log(req);
+    console.log(dealers);
     res.json({ dealers });
 
   } catch (err) {
@@ -160,76 +180,134 @@ router.post(
   upload.single("file"),
   async (req, res) => {
     try {
+      console.log("==== UPLOAD DEALERS STARTED ====");
+
       if (!req.file) {
+        console.log("❌ No file uploaded");
         return res.status(400).json({ msg: "No file uploaded" });
       }
 
-      const user = req.user;
+      console.log("User:", req.user);
       const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet);
 
-      const selectedDistributorBP = req.body.bpCode;   // <-- COMING FROM FRONTEND
+      console.log("Total rows in Excel:", rows.length);
+
+      const selectedDistributorBP = req.body.bpCode;
+      console.log("Selected Distributor BP from UI:", selectedDistributorBP);
 
       let success = [];
       let failed = [];
-
+      const cleanedRow = {};
       for (const row of rows) {
         try {
-          const name = row["Name"];
-          const mobile = row["Mobile"];
-          const address = row["Address"];
+          console.log("\n==============================");
+          console.log("Processing Raw Row:", row);
+          console.log("==============================");
 
+          // CLEAN HEADERS
+
+          for (let key in row) {
+            const cleanKey = key.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+            cleanedRow[cleanKey] = row[key];
+          }
+
+          console.log("Cleaned Row:", cleanedRow);
+
+          const name = cleanedRow["Name"];
+          const mobile = cleanedRow["Phone Number"];
+          const address = cleanedRow["Address"];
+          const excelBP = cleanedRow["BP Code"];
+
+          console.log("Parsed Values =>", {
+            name,
+            mobile,
+            address,
+            excelBP,
+            selectedDistributorBP
+          });
+
+          // VALIDATION
           if (!name || !mobile) {
-            failed.push({ row, error: "Missing name/mobile" });
+            console.log("❌ Missing Name or Mobile");
+            failed.push({ cleanedRow, error: "Missing name/mobile" });
             continue;
           }
 
           let distributor;
+          console.log("User Role:", req.user.role);
 
-          if (user.role === "Distributor") {
-            // Distributor creating dealer → Auto assign
-            distributor = user;
-          } 
-          
-          else if (user.role === "Company") {
-            // Company must select BP Code from UI
-            if (!selectedDistributorBP) {
-              failed.push({ row, error: "Distributor BP Code missing" });
+          // CASE 1 → Distributor creating dealers
+          if (req.user.role === "Distributor") {
+            distributor = req.user;
+            console.log("Auto assigned distributor as logged in distributor");
+          }
+
+          // CASE 2 → Company creating dealers
+          else if (req.user.role === "Company") {
+            let bpToUse = null;
+
+            if (excelBP) {
+              bpToUse = excelBP;
+              console.log("Using Excel BP Code:", bpToUse);
+            } else if (selectedDistributorBP) {
+              bpToUse = selectedDistributorBP;
+              console.log("Using UI Selected BP Code:", bpToUse);
+            }
+
+            if (!bpToUse) {
+              console.log("❌ No BP code found in Excel or UI");
+              failed.push({ cleanedRow, error: "Distributor BP Code missing (Excel or UI)" });
               continue;
             }
 
+            console.log("Searching Distributor with BP Code:", bpToUse);
+
             distributor = await User.findOne({
-              bpCode: selectedDistributorBP,
+              bpCode: bpToUse,
               role: "Distributor"
             });
 
+            console.log("Distributor Found:", distributor);
+
             if (!distributor) {
-              failed.push({ row, error: "Distributor not found for BP Code" });
+              console.log("❌ Distributor NOT FOUND for BP:", bpToUse);
+              failed.push({ cleanedRow, error: `Distributor not found for BP Code ${bpToUse}` });
               continue;
             }
           }
 
-          // Now create dealer
+          // CREATE DEALER
+          console.log("Creating Dealer For Distributor:", distributor.bpCode);
+
           const dealer = new User({
             role: "Dealer",
             name,
             mobile,
             address: address || "",
             distributorID: distributor._id,
-            bpCode: distributor.bpCode,       // dealer inherits distributor BP Code
-            bpName: distributor.bpName,       // dealer inherits distributor BP Name
-            createdBy: user._id,
+            bpCode: distributor.bpCode,
+            bpName: distributor.bpName,
+            createdBy: req.user._id,
             isActive: true
           });
 
           await dealer.save();
-          success.push(row);
+
+          console.log("✔ Dealer Created Successfully");
+          success.push(cleanedRow);
 
         } catch (err) {
-          failed.push({ row, error: err.message });
+          console.log("❌ Exception in loop:", err.message);
+          failed.push({ error: err.message, cleanedRow });
         }
       }
+
+      console.log("\n==== FINAL RESULT ====");
+      console.log("Success:", success.length);
+      console.log("Failed:", failed.length);
+      console.log("======================\n");
 
       res.json({
         msg: "Dealer upload complete",
@@ -240,11 +318,13 @@ router.post(
       });
 
     } catch (error) {
-      console.error("DEALER UPLOAD ERROR:", error);
-      res.status(500).json({ msg: "Server error" });
+      console.log("❌ SERVER ERROR:", error);
+      res.status(500).json({ msg: "Server error", error: error.message });
     }
   }
 );
+
+
 
 
 

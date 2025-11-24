@@ -68,16 +68,34 @@ export default function CompanyDashboard({user}) {
   const handleBulkProductUpload = async (file) => {
     try {
       setLoading(true);
+  
       const res = await uploadProducts(file);
-      alert(`✔ Product Upload Complete\nSuccess: ${res.data.successCount}\nFailed: ${res.data.failedCount}`);
+  
+      const { successCount, failedCount, failed } = res.data;
+  
+      let msg = `✔ Product Upload Complete
+  Success: ${successCount}
+  Failed: ${failedCount}`;
+  
+      // If failed rows exist, show first 3 errors
+      if (failedCount > 0) {
+        msg += `\n\n⚠ Some rows failed:\n`;
+        failed.slice(0, 3).forEach((f, idx) => {
+          msg += `${idx + 1}. ${f.error}\n`;
+        });
+      }
+  
+      alert(msg);
       loadData();
+  
     } catch (err) {
       console.error(err);
-      alert("Failed to upload products");
+      alert("❌ Failed to upload products");
     } finally {
       setLoading(false);
     }
   };
+  
   
   const handleBulkInvoiceUpload = async (file, pointsMode) => {
     try {
@@ -132,10 +150,6 @@ export default function CompanyDashboard({user}) {
   
       // Company MUST select BP Code
       if (user.role === "Company") {
-        if (!selectedBPCode) {
-          alert("Please select Distributor BP Code first");
-          return;
-        }
         form.append("distributorBPCode", selectedBPCode);
       }
   
@@ -457,13 +471,17 @@ export default function CompanyDashboard({user}) {
   />
 </label>
 {/* Dealer Upload (Company chooses BP CODE) */}
-<label className="cursor-pointer border p-4 rounded-lg hover:bg-gray-50 transition">
+<div className="cursor-pointer border p-4 rounded-lg hover:bg-gray-50 transition">
+
+  {/* Only Company sees dropdown */}
   {user.role === "Company" && (
     <div className="mb-2">
       <label className="block text-sm text-gray-700 font-medium">
         Select Distributor (BP Code)
       </label>
+
       <select
+        value={selectedBPCode}
         onChange={(e) => setSelectedBPCode(e.target.value)}
         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
       >
@@ -477,18 +495,21 @@ export default function CompanyDashboard({user}) {
     </div>
   )}
 
-  <span className="flex items-center space-x-2 text-gray-700">
+  {/* File input trigger */}
+  <label className="cursor-pointer flex items-center space-x-2 text-gray-700">
     <span className="text-xl">👥</span>
     <span>Upload Dealers</span>
-  </span>
 
-  <input
-    type="file"
-    accept=".xlsx,.xls,.csv"
-    className="hidden"
-    onChange={(e) => handleBulkDealerUpload(e.target.files[0])}
-  />
-</label>
+    <input
+      type="file"
+      accept=".xlsx,.xls,.csv"
+      className="hidden"
+      onChange={(e) => handleBulkDealerUpload(e.target.files[0], selectedBPCode)}
+    />
+  </label>
+</div>
+
+
 
 
 

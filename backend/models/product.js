@@ -16,14 +16,10 @@ const ProductSchema = new mongoose.Schema({
   bomType: { type: String, default: "Not a BOM" },
 
   // Sales Unit of Measurement (BOX / CARTON / PIECE etc.)
-  salesUom: {
-    type: String,
-    enum: ["BOX", "CARTON", "PIECE"],
-    required: true
-  },
+  imageURL:{type:String,default:"No image"},
 
   // How many pieces inside a box or carton
-  boxQuantity: { type: Number, required: true },   // Example: 20 pcs per BOX
+  totalPieces: { type: Number, default:0 },   // Example: 20 pcs per BOX
 
   // Stock quantity (optional)
   uom: { type: Number, default: 0 },

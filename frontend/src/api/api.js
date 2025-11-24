@@ -169,13 +169,13 @@ export const uploadInvoices = (file, pointsMode) => {
   formData.append("file", file);
   formData.append("pointsMode", pointsMode);
 
-  return axios.post("/api/invoice/upload-invoices", formData, {
+  return axios.post("/invoice/upload-invoices", formData, {
     headers: { "Content-Type": "multipart/form-data" },
     withCredentials: true  // because JWT is in cookie
   });
 };
 export const uploadDealers = (form) =>
-  api.post("/bulk/upload-dealers", form, {
+  api.post("/users/upload-dealers", form, {
     headers: { "Content-Type": "multipart/form-data" }
   });
 

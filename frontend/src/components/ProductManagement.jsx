@@ -159,14 +159,26 @@ export default function ProductManagement() {
                         )}
                         <div>
                           <h3 className="text-xl font-bold text-gray-900">{product.name}</h3>
-                          <p className="text-sm text-gray-600">{product.uom}</p>
+                          <p className="text-sm text-gray-600">{product.itemNo}</p>
                         </div>
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                           <span className="text-primary-500">⭐</span>
-                          <span>{product.pointsPerUnit} points per unit</span>
+                          <span>{product.rewardsperunit} Rewards Per Unit</span>
                         </div>
+
+
+  {/* BOM TYPE */}
+  <div className="flex items-center space-x-2">
+    <span className="text-green-500">🧩</span>
+    <span>BOM Type: {product.bomType || "Not a BOM"}</span>
+  </div>
+                           {/* TOTAL PIECES */}
+                           <div className="flex items-center space-x-2">
+    <span className="text-blue-500">📦</span>
+    <span>Total Pieces: <strong>{product.totalPieces}</strong></span>
+  </div>
                         {product.imageURL && (
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <span className="text-primary-500">🖼️</span>
