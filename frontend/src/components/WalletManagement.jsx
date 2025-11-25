@@ -72,7 +72,7 @@ export default function WalletManagement() {
             <p className="text-gray-600 text-lg">Manage wallet balances and transactions</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-primary-600">{balance.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-primary-600">{balance}</div>
             <div className="text-sm text-gray-500">Your Balance</div>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function WalletManagement() {
                 </div>
               </div>
               <div className="ml-4">
-                <h3 className="text-lg font-bold text-gray-900">{summary.totalPoints.toLocaleString()}</h3>
+                <h3 className="text-lg font-bold text-gray-900">{summary.totalPoints}</h3>
                 <p className="text-sm text-gray-600">Total Points</p>
               </div>
             </div>
@@ -117,7 +117,7 @@ export default function WalletManagement() {
                 </div>
               </div>
               <div className="ml-4">
-                <h3 className="text-lg font-bold text-gray-900">{summary.topWallets.length}</h3>
+                <h3 className="text-lg font-bold text-gray-900">{summary.topWallets?.length}</h3>
                 <p className="text-sm text-gray-600">Top Performers</p>
               </div>
             </div>
@@ -175,7 +175,7 @@ export default function WalletManagement() {
           {activeTab === 'balance' && (
             <div>
               <h2 className="text-lg font-medium text-gray-900 mb-6">My Transaction History</h2>
-              {transactions.length === 0 ? (
+              {transactions?.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-gray-400 text-6xl mb-4">📊</div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions yet</h3>
@@ -265,7 +265,7 @@ export default function WalletManagement() {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-bold text-primary-600">
-                        {wallet.balancePoints.toLocaleString()}
+                        {wallet.balancePoints}
                       </div>
                       <div className="text-xs text-gray-500">points</div>
                     </div>
@@ -293,7 +293,7 @@ export default function WalletManagement() {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-yellow-600">
-                          {wallet.balancePoints.toLocaleString()}
+                          {wallet.balancePoints}
                         </div>
                         <div className="text-xs text-gray-500">points</div>
                       </div>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { getAllProducts } from "../api/api";
+import { getAllProducts, getMyProductAllocations, getProfile } from "../api/api";
 
 export default function ProductsView() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [scope, setScope] = useState("all");
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     loadProducts();
@@ -13,8 +15,20 @@ export default function ProductsView() {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const response = await getAllProducts();
-      setProducts(response.data.products);
+      const profileRes = await getProfile();
+      const role = profileRes.data.user.role;
+      setUserRole(role);
+
+      if (role === "Company") {
+        const response = await getAllProducts();
+        setProducts(response.data.products || []);
+        setScope("all");
+      } else {
+        const allocationsRes = await getMyProductAllocations();
+        const { scope: apiScope = "allocated", products: allocated = [] } = allocationsRes.data || {};
+        setScope(apiScope);
+        setProducts(allocated || []);
+      }
     } catch (error) {
       console.error("Error loading products:", error);
     } finally {
@@ -26,7 +40,8 @@ export default function ProductsView() {
     const search = searchTerm.toLowerCase();
     const description = (product.itemDescription || product.name || "").toLowerCase();
     const itemNo = (product.itemNo || "").toLowerCase();
-    return description.includes(search) || itemNo.includes(search);
+    const allocationInfo = product.allocation ? String(product.allocation.qty).toLowerCase() : "";
+    return description.includes(search) || itemNo.includes(search) || allocationInfo.includes(search);
   });
 
   return (
@@ -44,6 +59,25 @@ export default function ProductsView() {
           </div>
         </div>
       </div>
+
+      {/* Access banner */}
+      {scope === "allocated" && (
+        <div className="bg-gradient-to-r from-yellow-50 via-white to-white border border-yellow-200 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-start space-x-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center text-white text-lg">
+              ⭐
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-yellow-900">
+                Products allocated to you by {userRole === "Distributor" ? "the Company" : "your Distributor"}
+              </h3>
+              <p className="text-sm text-yellow-800">
+                Quantities update automatically whenever a new invoice arrives. Only available stock is shown here.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
@@ -86,6 +120,8 @@ export default function ProductsView() {
                 const rewardsPerDozen = product.rewardsPerDozen ?? rewardsPerPiece * 12;
                 const rewardsForBox = product.rewardsForBox ?? rewardsPerPiece * (product.boxQuantity || 0);
                 const rewardsForCarton = product.rewardsForCarton ?? rewardsPerPiece * (product.cartonQuantity || 0);
+                const allocationInfo = product.allocation;
+                const allocationPieces = Number(allocationInfo?.pieces ?? allocationInfo?.qty ?? 0);
 
                 return (
                   <div key={product._id} className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
@@ -165,6 +201,19 @@ export default function ProductsView() {
                           </div>
                         </div>
                       </div>
+                      {allocationInfo && (
+                        <div className="mt-4 rounded-xl border border-yellow-200 bg-gradient-to-r from-yellow-50 to-white p-4">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-yellow-800 font-medium">Available Inventory</span>
+                            <span className="text-yellow-900 font-bold">
+                              {allocationInfo.qty} {allocationInfo.uom}
+                            </span>
+                          </div>
+                          <p className="text-xs text-yellow-700 mt-1">
+                            ≈ {allocationPieces.toLocaleString()} pieces ready to allocate
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

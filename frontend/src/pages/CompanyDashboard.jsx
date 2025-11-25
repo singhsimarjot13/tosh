@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getDistributors, getAllDealers, createDistributor, getInvoiceSummary, getWalletSummary, uploadDistributors, uploadProducts, uploadInvoices, uploadDealers } from "../api/api";
 import ProductManagement from "../components/ProductManagement";
 import WalletManagement from "../components/WalletManagement";
@@ -14,8 +14,12 @@ export default function CompanyDashboard({user}) {
   const [activeTab, setActiveTab] = useState('overview');
   const [summary, setSummary] = useState(null);
   const [invoicePointsMode, setInvoicePointsMode] = useState("AMOUNT");
+  const [invoiceUploadDate, setInvoiceUploadDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [selectedBPCode, setSelectedBPCode] = useState("");
   const [selectedDistributor, setSelectedDistributor] = useState(null);
+  const invoiceUploadInputRef = useRef(null);
+
+  const triggerInvoiceUpload = () => invoiceUploadInputRef.current?.click();
 
 
 
@@ -97,10 +101,18 @@ export default function CompanyDashboard({user}) {
   };
   
   
-  const handleBulkInvoiceUpload = async (file, pointsMode) => {
+  const handleBulkInvoiceUpload = async (file, pointsMode, invoiceDate) => {
+    if (!file) {
+      alert("Please select an invoice file to upload.");
+      return;
+    }
+    if (!invoiceDate) {
+      alert("Please pick the invoice date before uploading.");
+      return;
+    }
     try {
       setLoading(true);
-      const res = await uploadInvoices(file, pointsMode);
+      const res = await uploadInvoices(file, pointsMode, invoiceDate);
       alert(`✔ Invoice Upload Complete\nSuccess: ${res.data.successCount}\nFailed: ${res.data.failedCount}`);
       loadData();
     } catch (err) {
@@ -442,34 +454,58 @@ export default function CompanyDashboard({user}) {
     </label>
 
     {/* Invoice Upload */}
-    <label className="cursor-pointer border p-4 rounded-lg hover:bg-gray-50 transition">
-  
-  {/* Dropdown for Points Mode */}
-  <div className="mb-2">
-    <label className="block text-sm text-gray-700 font-medium">Points Mode</label>
-    <select
-      value={invoicePointsMode}
-      onChange={(e) => setInvoicePointsMode(e.target.value)}
-      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm"
-    >
-      <option value="PIECE">Based on PIECES</option>
-      <option value="AMOUNT">Based on AMOUNT</option>
-    </select>
-  </div>
+    <div className="border rounded-lg p-4 hover:bg-gray-50 transition space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2 text-gray-700">
+          <span className="text-xl">📄</span>
+          <span>Upload Invoices</span>
+        </div>
+        <button
+          type="button"
+          onClick={triggerInvoiceUpload}
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-300 to-yellow-500 text-sm font-semibold text-gray-900 shadow-md"
+        >
+          Choose File
+        </button>
+      </div>
 
-  {/* File Upload */}
-  <span className="flex items-center space-x-2 text-gray-700">
-    <span className="text-xl">📄</span>
-    <span>Upload Invoices</span>
-  </span>
+      <div className="grid gap-3">
+        <div>
+          <label className="block text-sm text-gray-700 font-medium">Points Mode</label>
+          <select
+            value={invoicePointsMode}
+            onChange={(e) => setInvoicePointsMode(e.target.value)}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm"
+          >
+            <option value="PIECE">Based on PIECES</option>
+            <option value="AMOUNT">Based on AMOUNT</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm text-gray-700 font-medium">Invoice Date</label>
+          <input
+            type="date"
+            value={invoiceUploadDate}
+            onChange={(e) => setInvoiceUploadDate(e.target.value)}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm"
+          />
+        </div>
+      </div>
 
-  <input
-    type="file"
-    accept=".xlsx,.xls,.csv"
-    className="hidden"
-    onChange={(e) => handleBulkInvoiceUpload(e.target.files[0], invoicePointsMode)}
-  />
-</label>
+      <input
+        ref={invoiceUploadInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (file) {
+            handleBulkInvoiceUpload(file, invoicePointsMode, invoiceUploadDate);
+            e.target.value = "";
+          }
+        }}
+      />
+    </div>
 {/* Dealer Upload (Company chooses BP CODE) */}
 <div className="cursor-pointer border p-4 rounded-lg hover:bg-gray-50 transition">
 
@@ -518,7 +554,7 @@ export default function CompanyDashboard({user}) {
 
           {activeTab === 'products' && <ProductManagement />}
           {activeTab === 'wallets' && <WalletManagement />}
-          {activeTab === 'invoices' && <InvoiceManagement />}
+          {activeTab === 'invoices' && <InvoiceManagement onInvoiceCreated={loadData} />}
           {activeTab === 'content' && <ContentManagement />}
           {activeTab === 'analytics' && <DashboardAnalytics />}
           {activeTab === 'distributors' && (

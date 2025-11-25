@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getDealers, createDealer, getWalletBalance, getWalletTransactions, getUserInvoices, distributorDeductDealer, uploadDealers } from "../api/api";
+import { getDealers, createDealer, getWalletBalance, getWalletTransactions, getUserInvoices, distributorDeductDealer, uploadDealers, getProfile } from "../api/api";
 import ProductsView from "../components/ProductsView";
 import InvoiceManagement from "../components/InvoiceManagement";
 import ContentView from "../components/ContentView";
@@ -16,6 +16,43 @@ export default function DistributorDashboard({user}) {
 	const [showDeductModal, setShowDeductModal] = useState(false);
 	const [deductForm, setDeductForm] = useState({ dealerId: '', points: '', note: '' });
 	const [deductSubmitting, setDeductSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState(user || null);
+
+  const summarizeIncomingProducts = (invoiceRecords, receiverId, creatorRoleFilter) => {
+    if (!receiverId) return [];
+    const summary = new Map();
+    const receiverIdStr = String(receiverId);
+
+    invoiceRecords.forEach(invoice => {
+      if (creatorRoleFilter && invoice.createdByRole !== creatorRoleFilter) return;
+      const toUserId = invoice.toUser?._id || invoice.toUser;
+      if (String(toUserId) !== receiverIdStr) return;
+
+      (invoice.items || []).forEach(item => {
+        const productId = item.productID?._id || item.productID || item.itemCode;
+        if (!productId) return;
+        const key = String(productId);
+        const entry = summary.get(key) || {
+          productId: key,
+          productName: item.productID?.name || item.itemName || "Product",
+          totalQty: 0,
+          totalPoints: 0,
+          lastDate: null
+        };
+
+        entry.totalQty += Number(item.qty || 0);
+        entry.totalPoints += Number(item.rewardTotal || 0);
+        const invoiceDate = new Date(invoice.invoiceDate || invoice.date || Date.now());
+        if (!entry.lastDate || invoiceDate > entry.lastDate) {
+          entry.lastDate = invoiceDate;
+        }
+
+        summary.set(key, entry);
+      });
+    });
+
+    return Array.from(summary.values());
+  };
 
   useEffect(() => {
     loadData();
@@ -23,50 +60,29 @@ export default function DistributorDashboard({user}) {
 
   const loadData = async () => {
     try {
-      const dealersRes = await getDealers();
-      setDealers(dealersRes.data.dealers);
-    } catch (err) {
-      console.error("Dealers Fetch Error:", err);
-    }
-  
-    try {
-      const balanceRes = await getWalletBalance();
-      setWalletBalance(balanceRes.data.balance);
-    } catch (err) {
-      console.error("Wallet Balance Error:", err);
-    }
-  
-    try {
-      const transactionsRes = await getWalletTransactions();
-      setTransactions(transactionsRes.data.transactions);
-    } catch (err) {
-      console.error("Transactions Error:", err);
-    }
-  
-    try {
-      const invoicesRes = await getUserInvoices("received");
-      const inv = invoicesRes.data.invoices || [];
-  
-      // Process invoices
-      const map = new Map();
-      inv.forEach(i => {
-        const id = i.productID?._id || i.productID;
-        const name = i.productID?.name || "-";
-        const key = String(id);
-        const entry = map.get(key) || { productId: key, productName: name, totalQty: 0, lastDate: null };
-  
-        entry.totalQty += Number(i.qty || 0);
-        const d = new Date(i.date);
-        if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
-  
-        map.set(key, entry);
-      });
-  
-      setInvoices(inv);
-      setBoughtProducts(Array.from(map.values()));
-  
-    } catch (err) {
-      console.error("Invoices Error:", err);
+      let profileUser = currentUser;
+      if (!profileUser) {
+        const profileRes = await getProfile();
+        profileUser = profileRes.data.user;
+        setCurrentUser(profileUser);
+      }
+
+      const [dealersRes, balanceRes, transactionsRes, invoicesRes] = await Promise.all([
+        getDealers(),
+        getWalletBalance(),
+        getWalletTransactions(),
+        getUserInvoices()
+      ]);
+
+      setDealers(dealersRes.data.dealers || []);
+      setWalletBalance(balanceRes.data.balance || 0);
+      setTransactions(transactionsRes.data.transactions || []);
+
+      const invoiceList = invoicesRes.data.invoices || [];
+      setInvoices(invoiceList);
+      setBoughtProducts(summarizeIncomingProducts(invoiceList, profileUser?._id, "Company"));
+    } catch (error) {
+      console.error("Distributor dashboard load error:", error);
     }
   };
   
@@ -307,6 +323,7 @@ export default function DistributorDashboard({user}) {
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reward Points</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Purchase</th>
                       </tr>
                     </thead>
@@ -315,6 +332,7 @@ export default function DistributorDashboard({user}) {
                         <tr key={bp.productId}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{bp.productName}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{bp.totalQty}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{(bp.totalPoints || 0).toLocaleString()}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{bp.lastDate ? new Date(bp.lastDate).toLocaleDateString() : '-'}</td>
                         </tr>
                       ))}
@@ -417,7 +435,7 @@ export default function DistributorDashboard({user}) {
               )}
             </div>
           )}
-          {activeTab === 'invoices' && <InvoiceManagement />}
+          {activeTab === 'invoices' && <InvoiceManagement onInvoiceCreated={loadData} />}
           {activeTab === 'wallet' && (
             <div>
               <h2 className="text-lg font-medium text-gray-900 mb-6">Wallet History</h2>

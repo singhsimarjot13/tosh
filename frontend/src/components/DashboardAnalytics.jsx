@@ -12,6 +12,37 @@ export default function DashboardAnalytics() {
   const [loading, setLoading] = useState(false);
   const [activeChart, setActiveChart] = useState('overview');
 
+  const normalizeInvoices = (invoiceDocs = []) => {
+    return invoiceDocs.flatMap(invoice => {
+      const base = {
+        invoiceId: invoice._id,
+        fromUser: invoice.fromUser,
+        toUser: invoice.toUser,
+        date: invoice.invoiceDate || invoice.date || Date.now()
+      };
+
+      if (!Array.isArray(invoice.items) || invoice.items.length === 0) {
+        return [
+          {
+            ...base,
+            _id: `${invoice._id}`,
+            productID: { _id: null, name: "N/A" },
+            qty: 0,
+            points: invoice.totalReward || 0
+          }
+        ];
+      }
+
+      return invoice.items.map((item, idx) => ({
+        ...base,
+        _id: `${invoice._id}-${idx}`,
+        productID: item.productID || { _id: null, name: item.itemName || "Product" },
+        qty: item.qty || 0,
+        points: item.rewardTotal || 0
+      }));
+    });
+  };
+
   useEffect(() => {
     loadAnalytics();
   }, []);
@@ -30,7 +61,7 @@ export default function DashboardAnalytics() {
       setAnalytics({
         distributors: distributorsRes.data.distributors,
         dealers: dealersRes.data.dealers,
-        invoices: invoicesRes.data.invoices,
+        invoices: normalizeInvoices(invoicesRes.data.invoices || []),
         wallets: walletsRes.data.wallets,
         summary: summaryRes.data
       });

@@ -28,7 +28,7 @@ const UserProductAllocationSchema = new mongoose.Schema({
   // For reference: the UOM assigned to the user (same as product's sales UoM)
   uom: {
     type: String,
-    enum: ["BOX", "CARTON", "PIECE"]
+    enum: ["BOX", "CARTON", "PIECE","DOZEN"]
   }
 
 }, { timestamps: true });
@@ -55,9 +55,11 @@ UserProductAllocationSchema.pre("save", async function (next) {
   if (product.salesUom === "BOX") {
     this.pieces = this.qty * product.boxQuantity;
   } else if (product.salesUom === "CARTON") {
-    this.pieces = this.qty * product.boxQuantity; // carton items also stored in boxQuantity
+    this.pieces = this.qty * product.cartonQuantity; // carton items also stored in boxQuantity
   } else if (product.salesUom === "PIECE") {
     this.pieces = this.qty;
+  }else if(product.salesUom==="DOZEN"){
+    this.pieces=this.qty*12
   }
 
   next();

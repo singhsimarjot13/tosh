@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getWalletBalance, getWalletTransactions, getUserInvoices } from "../api/api";
+import { getWalletBalance, getWalletTransactions, getUserInvoices, getProfile } from "../api/api";
 import ProductsView from "../components/ProductsView";
 import ContentView from "../components/ContentView";
 
@@ -9,6 +9,43 @@ export default function DealerDashboard({user}) {
   const [transactions, setTransactions] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [boughtProducts, setBoughtProducts] = useState([]);
+  const [currentUser, setCurrentUser] = useState(user || null);
+
+  const summarizeIncomingProducts = (invoiceRecords, receiverId) => {
+    if (!receiverId) return [];
+    const summary = new Map();
+    const receiverIdStr = String(receiverId);
+
+    invoiceRecords.forEach(invoice => {
+      if (invoice.createdByRole !== "Distributor") return;
+      const toUserId = invoice.toUser?._id || invoice.toUser;
+      if (String(toUserId) !== receiverIdStr) return;
+
+      (invoice.items || []).forEach(item => {
+        const productId = item.productID?._id || item.productID || item.itemCode;
+        if (!productId) return;
+        const key = String(productId);
+        const entry = summary.get(key) || {
+          productId: key,
+          productName: item.productID?.name || item.itemName || "Product",
+          totalQty: 0,
+          totalPoints: 0,
+          lastDate: null
+        };
+
+        entry.totalQty += Number(item.qty || 0);
+        entry.totalPoints += Number(item.rewardTotal || 0);
+        const invoiceDate = new Date(invoice.invoiceDate || invoice.date || Date.now());
+        if (!entry.lastDate || invoiceDate > entry.lastDate) {
+          entry.lastDate = invoiceDate;
+        }
+
+        summary.set(key, entry);
+      });
+    });
+
+    return Array.from(summary.values());
+  };
 
   useEffect(() => {
     loadData();
@@ -16,28 +53,25 @@ export default function DealerDashboard({user}) {
 
   const loadData = async () => {
     try {
+      let profileUser = currentUser;
+      if (!profileUser) {
+        const profileRes = await getProfile();
+        profileUser = profileRes.data.user;
+        setCurrentUser(profileUser);
+      }
+
       const [balanceRes, transactionsRes, invoicesRes] = await Promise.all([
         getWalletBalance(),
         getWalletTransactions(),
-        getUserInvoices('received')
+        getUserInvoices()
       ]);
-      setWalletBalance(balanceRes.data.balance);
-      setTransactions(transactionsRes.data.transactions);
-      const inv = invoicesRes.data.invoices || [];
-      setInvoices(inv);
-      // Aggregate bought products by productID
-      const map = new Map();
-      inv.forEach(i => {
-        const id = i.productID?._id || i.productID;
-        const name = i.productID?.name || '-';
-        const key = String(id);
-        const entry = map.get(key) || { productId: key, productName: name, totalQty: 0, lastDate: null };
-        entry.totalQty += Number(i.qty || 0);
-        const d = new Date(i.date);
-        if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
-        map.set(key, entry);
-      });
-      setBoughtProducts(Array.from(map.values()));
+
+      setWalletBalance(balanceRes.data.balance || 0);
+      setTransactions(transactionsRes.data.transactions || []);
+
+      const invoiceList = invoicesRes.data.invoices || [];
+      setInvoices(invoiceList);
+      setBoughtProducts(summarizeIncomingProducts(invoiceList, profileUser?._id));
     } catch (error) {
       console.error("Error loading data:", error);
     }
@@ -218,6 +252,7 @@ export default function DealerDashboard({user}) {
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reward Points</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Purchase</th>
                       </tr>
                     </thead>
@@ -226,6 +261,7 @@ export default function DealerDashboard({user}) {
                         <tr key={bp.productId}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{bp.productName}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{bp.totalQty}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{(bp.totalPoints || 0).toLocaleString()}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{bp.lastDate ? new Date(bp.lastDate).toLocaleDateString() : '-'}</td>
                         </tr>
                       ))}
@@ -249,21 +285,27 @@ export default function DealerDashboard({user}) {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {invoices.map(inv => (
                         <tr key={inv._id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(inv.date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            #{inv._id.slice(-6)}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{inv.fromUser?.name || '-'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{inv.productID?.name || '-'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{inv.qty}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{inv.points?.toLocaleString?.() ?? inv.points}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{inv.items?.length || 0}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {(inv.totalReward || 0).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {new Date(inv.invoiceDate || inv.date || Date.now()).toLocaleDateString()}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

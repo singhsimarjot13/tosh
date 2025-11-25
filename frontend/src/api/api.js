@@ -108,11 +108,14 @@ export const distributorDeductDealer = (dealerId, points, note) =>
   api.post("/wallets/deduct-dealer", { dealerId, points, note });
 
 // Invoice APIs
-export const createInvoice = (invoiceData) => 
-  api.post("/invoices", invoiceData);
+export const createCompanyInvoice = (payload) =>
+  api.post("/invoices/company-create", payload);
 
-export const getUserInvoices = (type = 'all') => 
-  api.get(`/invoices/my-invoices?type=${type}`);
+export const createDistributorInvoice = (payload) =>
+  api.post("/invoices/distributor-create", payload);
+
+export const getUserInvoices = () =>
+  api.get(`/invoices/my-invoices`);
 
 export const getAllInvoices = () => 
   api.get("/invoices/admin/all");
@@ -127,6 +130,9 @@ export const getInvoiceSummary = (role = 'admin') => {
 
 export const getInvoiceFormData = () =>
   api.get("/invoices/form-data");
+
+export const getMyProductAllocations = () =>
+  api.get("/invoices/my-products");
 
 // Content APIs
 export const getAllContent = (params = '') => 
@@ -164,14 +170,16 @@ export const uploadProducts = (file) => {
   });
 };
 
-export const uploadInvoices = (file, pointsMode) => {
+export const uploadInvoices = (file, pointsMode, invoiceDate) => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("pointsMode", pointsMode);
+  if (invoiceDate) {
+    formData.append("invoiceDate", invoiceDate);
+  }
 
-  return axios.post("/invoice/upload-invoices", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-    withCredentials: true  // because JWT is in cookie
+  return api.post("/invoice/upload-invoices", formData, {
+    headers: { "Content-Type": "multipart/form-data" }
   });
 };
 export const uploadDealers = (form) =>

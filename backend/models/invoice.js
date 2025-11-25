@@ -1,60 +1,59 @@
 import mongoose from "mongoose";
 
-const InvoiceSchema = new mongoose.Schema({
-  fromUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  toUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-
-  productID: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-
-  // Item fields
-  itemCode: { type: String, required: true },
-  itemName: { type: String, required: true },
-
-  customerVendorCode: { type: String, required: true },
-  customerVendorName: { type: String, required: true },
-
-  qty: { type: Number, required: true },
-
-  uom: {
-    type: String,
-    enum: ["BOX", "CARTON", "PIECE"],
-    required: true
+const InvoiceItemSchema = new mongoose.Schema(
+  {
+    productID: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+    itemCode: { type: String, required: true },
+    itemName: { type: String, required: true },
+    qty: { type: Number, required: true },
+    uom: {
+      type: String,
+      enum: ["BOX", "CARTON", "PIECE", "DOZEN"],
+      required: true
+    },
+    amount: { type: Number, required: true },
+    rewardPerUnit: { type: Number, default: 0 },
+    rewardTotal: { type: Number, default: 0 }
   },
+  { _id: false }
+);
 
-  pieces: { type: Number }, // Auto calculated
+const InvoiceSchema = new mongoose.Schema(
+  {
+    fromUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    toUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-  amount: { type: Number, required: true },
+    invoiceNumber: { type: String },
+    invoiceDate: { type: Date, required: true },
 
-  // NEW FIELD: how points should be calculated
-  pointsMode: {
-    type: String,
-    enum: ["PIECE", "AMOUNT"],
-    required: true
+    customerVendorCode: { type: String, required: true },
+    customerVendorName: { type: String, required: true },
+
+    items: {
+      type: [InvoiceItemSchema],
+      validate: [
+        (items) => Array.isArray(items) && items.length > 0,
+        "Invoice must have at least one item"
+      ]
+    },
+
+    totalQty: { type: Number, default: 0 },
+    totalAmount: { type: Number, default: 0 },
+    totalReward: { type: Number, default: 0 },
+
+    createdByRole: {
+      type: String,
+      enum: ["Company", "Distributor"],
+      required: true
+    },
+
+    notes: { type: String },
+    date: { type: Date, default: Date.now }
   },
+  { timestamps: true }
+);
 
-  points: { type: Number, default: 0 },
-
-  date: { type: Date, default: Date.now }
-});
-
-// Pre-save hook
-InvoiceSchema.pre("save", function (next) {
-  // Calculate pieces
-  if (this.uom === "BOX") this.pieces = this.qty * 10;
-  else if (this.uom === "CARTON") this.pieces = this.qty * 100;
-  else if (this.uom === "PIECE") this.pieces = this.qty * 1;
-
-  // Calculate points
-  if (this.pointsMode === "PIECE") {
-    // 1 piece = 10 pts
-    this.points = this.pieces * 10;
-  } else if (this.pointsMode === "AMOUNT") {
-    // 0.01 rupee = 10 pts
-    // 1 rupee = 1000 pts
-    this.points = (this.amount / 0.01) * 10;
-  }
-
-  next();
-});
+InvoiceSchema.index({ invoiceDate: -1 });
+InvoiceSchema.index({ fromUser: 1, toUser: 1, invoiceDate: -1 });
 
 export default mongoose.model("Invoice", InvoiceSchema);

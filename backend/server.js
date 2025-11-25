@@ -7,6 +7,7 @@ import productRoutes from "./routes/product.js";
 import contentRoutes from "./routes/contentRoutes.js";
 import dotenv from "dotenv";
 import invoiceRoutes from "./routes/invoice.js";
+import walletRoutes from "./routes/wallet.js";
 
 dotenv.config();
 connectDB();
@@ -31,6 +32,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/invoice", invoiceRoutes);
+app.use("/api/invoices", invoiceRoutes);
+app.use("/api/wallets", walletRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
