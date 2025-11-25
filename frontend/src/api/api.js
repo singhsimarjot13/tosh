@@ -170,13 +170,13 @@ export const uploadProducts = (file) => {
   });
 };
 
-export const uploadInvoices = (file, pointsMode, invoiceDate) => {
+export const uploadInvoices = ({ file, pointsMode, invoiceDate, invoiceNumber, description }) => {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("pointsMode", pointsMode);
-  if (invoiceDate) {
-    formData.append("invoiceDate", invoiceDate);
-  }
+  if (pointsMode) formData.append("pointsMode", pointsMode);
+  if (invoiceDate) formData.append("invoiceDate", invoiceDate);
+  if (invoiceNumber) formData.append("invoiceNumber", invoiceNumber);
+  if (description) formData.append("description", description);
 
   return api.post("/invoice/upload-invoices", formData, {
     headers: { "Content-Type": "multipart/form-data" }

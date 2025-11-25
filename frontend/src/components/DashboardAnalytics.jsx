@@ -1,4 +1,15 @@
 import React, { useState, useEffect } from "react";
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar
+} from "recharts";
 import { getDistributors, getAllDealers, getInvoiceSummary, getAllInvoices, getAllWallets } from "../api/api";
 
 export default function DashboardAnalytics() {
@@ -15,7 +26,7 @@ export default function DashboardAnalytics() {
   const normalizeInvoices = (invoiceDocs = []) => {
     return invoiceDocs.flatMap(invoice => {
       const base = {
-        invoiceId: invoice._id,
+        invoiceId: invoice.id,
         fromUser: invoice.fromUser,
         toUser: invoice.toUser,
         date: invoice.invoiceDate || invoice.date || Date.now()
@@ -25,7 +36,7 @@ export default function DashboardAnalytics() {
         return [
           {
             ...base,
-            _id: `${invoice._id}`,
+            _id: `${invoice.id}`,
             productID: { _id: null, name: "N/A" },
             qty: 0,
             points: invoice.totalReward || 0
@@ -35,7 +46,7 @@ export default function DashboardAnalytics() {
 
       return invoice.items.map((item, idx) => ({
         ...base,
-        _id: `${invoice._id}-${idx}`,
+        _id: `${invoice.id}-${idx}`,
         productID: item.productID || { _id: null, name: item.itemName || "Product" },
         qty: item.qty || 0,
         points: item.rewardTotal || 0
@@ -76,10 +87,10 @@ export default function DashboardAnalytics() {
   const getTopDistributors = () => {
     const distributorStats = analytics.distributors.map(distributor => {
       const distributorInvoices = analytics.invoices.filter(invoice => 
-        invoice.fromUser._id === distributor._id || invoice.toUser._id === distributor._id
+        invoice.fromUser.id === distributor.id || invoice.toUser.id === distributor.id
       );
       const totalPoints = distributorInvoices.reduce((sum, invoice) => sum + invoice.points, 0);
-      const wallet = analytics.wallets.find(w => w.userID._id === distributor._id);
+      const wallet = analytics.wallets.find(w => w.userID.id === distributor.id);
       
       return {
         ...distributor,
@@ -97,10 +108,10 @@ export default function DashboardAnalytics() {
   const getTopDealers = () => {
     const dealerStats = analytics.dealers.map(dealer => {
       const dealerInvoices = analytics.invoices.filter(invoice => 
-        invoice.toUser._id === dealer._id
+        invoice.toUser.id === dealer.id
       );
       const totalPoints = dealerInvoices.reduce((sum, invoice) => sum + invoice.points, 0);
-      const wallet = analytics.wallets.find(w => w.userID._id === dealer._id);
+      const wallet = analytics.wallets.find(w => w.userID.id === dealer.id);
       
       return {
         ...dealer,
@@ -119,7 +130,7 @@ export default function DashboardAnalytics() {
     const productStats = {};
     
     analytics.invoices.forEach(invoice => {
-      const productId = invoice.productID._id;
+      const productId = invoice.productID.id;
       const productName = invoice.productID.name;
       
       if (!productStats[productId]) {
@@ -287,13 +298,12 @@ export default function DashboardAnalytics() {
                 </div>
               </div>
 
-              {/* Quick Stats */}
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="bg-white rounded-xl p-6 border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Top 5 Distributors</h3>
                   <div className="space-y-3">
                     {topDistributors.slice(0, 5).map((distributor, index) => (
-                      <div key={distributor._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={distributor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                             {index + 1}
@@ -335,37 +345,49 @@ export default function DashboardAnalytics() {
                   </div>
                 </div>
               </div>
+
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 h-80">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly volume (pts)</h3>
+                {monthlyStats.length === 0 ? (
+                  <p className="text-sm text-gray-500">Not enough data for trends.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={monthlyStats}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis
+                        dataKey="month"
+                        tickFormatter={(value) =>
+                          new Date(value + "-01").toLocaleDateString("en-US", { month: "short" })
+                        }
+                        stroke="#9ca3af"
+                      />
+                      <YAxis stroke="#9ca3af" />
+                      <Tooltip
+                        labelFormatter={(value) =>
+                          new Date(value + "-01").toLocaleDateString("en-US", { month: "long", year: "numeric" })
+                        }
+                      />
+                      <Line type="monotone" dataKey="totalPoints" stroke="#d9952f" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           )}
 
           {activeChart === 'distributors' && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Top 10 Distributors by Performance</h3>
-              <div className="space-y-4">
-                {topDistributors.map((distributor, index) => (
-                  <div key={distributor._id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <h4 className="text-lg font-semibold text-gray-900">{distributor.name}</h4>
-                          <p className="text-gray-600">{distributor.companyName}</p>
-                          <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                            <span>📱 {distributor.mobile}</span>
-                            <span>📄 {distributor.invoiceCount} invoices</span>
-                            <span>💰 {distributor.walletBalance.toLocaleString()} balance</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-primary-600">{distributor.totalPoints.toLocaleString()}</div>
-                        <div className="text-sm text-gray-500">total points</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">Top distributors</h3>
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topDistributors}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip />
+                    <Bar dataKey="totalPoints" fill="#d9952f" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}
@@ -375,7 +397,7 @@ export default function DashboardAnalytics() {
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Top 10 Dealers by Performance</h3>
               <div className="space-y-4">
                 {topDealers.map((dealer, index) => (
-                  <div key={dealer._id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div key={dealer.id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
@@ -433,31 +455,29 @@ export default function DashboardAnalytics() {
           )}
 
           {activeChart === 'trends' && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Monthly Performance Trends</h3>
-              <div className="space-y-4">
-                {monthlyStats.map((month) => (
-                  <div key={month.month} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900">
-                          {new Date(month.month + '-01').toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long' 
-                          })}
-                        </h4>
-                        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                          <span>📄 {month.totalInvoices} invoices</span>
-                          <span>📦 {month.totalQuantity} units</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">{month.totalPoints.toLocaleString()}</div>
-                        <div className="text-sm text-gray-500">total points</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">Monthly performance trends</h3>
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 h-96">
+                {monthlyStats.length === 0 ? (
+                  <p className="text-sm text-gray-500">Not enough data for a trend line yet.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={monthlyStats}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis
+                        dataKey="month"
+                        stroke="#9ca3af"
+                        tickFormatter={(value) =>
+                          new Date(value + "-01").toLocaleDateString("en-US", { month: "short" })
+                        }
+                      />
+                      <YAxis stroke="#9ca3af" />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="totalInvoices" stroke="#7c3aed" strokeWidth={2} dot />
+                      <Line type="monotone" dataKey="totalQuantity" stroke="#2563eb" strokeWidth={2} dot />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
           )}

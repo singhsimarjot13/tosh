@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getAllContent, createContent, updateContent, deleteContent, getContentSummary } from "../api/api";
 
-export default function ContentManagement() {
+export default function ContentManagement({ enableUploads = true }) {
   const [content, setContent] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -144,13 +144,15 @@ export default function ContentManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Content Management</h2>
           <p className="text-gray-600">Manage videos, images, documents, and news updates</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-        >
-          <span className="mr-2">📤</span>
-          Upload Content
-        </button>
+        {enableUploads && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            <span className="mr-2">📤</span>
+            Upload Content
+          </button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -331,7 +333,7 @@ export default function ContentManagement() {
       </div>
 
       {/* Upload Form Modal */}
-      {showForm && (
+      {enableUploads && showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">

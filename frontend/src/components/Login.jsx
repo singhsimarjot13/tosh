@@ -1,284 +1,211 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { login, loginWithPhone } from "../api/api";
 
+const cardVariant = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }
+};
+
+const baseButton =
+  "w-full flex items-center justify-between px-5 py-4 border border-gray-200 rounded-2xl text-base font-medium text-gray-800 hover:border-accent-400 hover:text-accent-600 transition-all duration-200";
+
 export default function Login({ setUser, setToken }) {
-  const [loginType, setLoginType] = useState(null); // null, 'Company', 'Distributor', 'Dealer'
+  const [loginType, setLoginType] = useState(null);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
     mobile: "",
     role: ""
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState({ loading: false, error: "" });
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleCompanyLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await login(formData.username, formData.password);
-      const { user } = response.data;
-      
-      setUser(user);
-      setToken(response.data.token || 'logged-in');
-    } catch (err) {
-      setError(err.response?.data?.msg || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePhoneLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await loginWithPhone(formData.mobile, formData.role);
-      const { user } = response.data;
-      
-      setUser(user);
-      setToken(response.data.token || 'logged-in');
-    } catch (err) {
-      setError(err.response?.data?.msg || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderLoginTypeSelection = () => (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="mx-auto h-16 w-16 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full flex items-center justify-center mb-4 animate-bounce-gentle">
-              <span className="text-2xl">🏢</span>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome Back
-            </h2>
-            <p className="text-gray-600">
-              Choose your login method
-            </p>
-          </div>
-          
-          <div className="space-y-4">
-            <button
-              onClick={() => setLoginType('Company')}
-              className="w-full flex items-center justify-center px-6 py-4 border border-gray-300 rounded-xl text-lg font-medium text-gray-700 hover:bg-primary-50 hover:border-primary-300 hover:text-primary-700 transition-all duration-200 transform hover:scale-105"
-            >
-              <span className="mr-3 text-2xl">👑</span>
-              Company Admin Login
-            </button>
-            
-            <button
-              onClick={() => setLoginType('Distributor')}
-              className="w-full flex items-center justify-center px-6 py-4 border border-gray-300 rounded-xl text-lg font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200 transform hover:scale-105"
-            >
-              <span className="mr-3 text-2xl">🏢</span>
-              Distributor Login
-            </button>
-            
-            <button
-              onClick={() => setLoginType('Dealer')}
-              className="w-full flex items-center justify-center px-6 py-4 border border-gray-300 rounded-xl text-lg font-medium text-gray-700 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-all duration-200 transform hover:scale-105"
-            >
-              <span className="mr-3 text-2xl">👥</span>
-              Dealer Login
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderCompanyLogin = () => (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="mx-auto h-16 w-16 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full flex items-center justify-center mb-4 animate-bounce-gentle">
-              <span className="text-2xl">👑</span>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Company Admin Login
-            </h2>
-            <p className="text-gray-600">
-              Sign in with your admin credentials
-            </p>
-          </div>
-          
-          <form className="space-y-6" onSubmit={handleCompanyLogin}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-                  placeholder="Enter your username"
-                  value={formData.username}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm animate-slide-up">
-                {error}
-              </div>
-            )}
-
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => setLoginType(null)}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </button>
-            </div>
-          </form>
-          
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Default credentials: admin / admin123
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderPhoneLogin = () => (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="mx-auto h-16 w-16 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full flex items-center justify-center mb-4 animate-bounce-gentle">
-              <span className="text-2xl">{loginType === 'Distributor' ? '🏢' : '👥'}</span>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {loginType === 'Distributor' ? 'Distributor Login' : 'Dealer Login'}
-            </h2>
-            <p className="text-gray-600">
-              Sign in with your mobile number
-            </p>
-          </div>
-          
-          <form className="space-y-6" onSubmit={handlePhoneLogin}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mobile Number
-                </label>
-                <input
-                  type="tel"
-                  name="mobile"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-                  placeholder="Enter your mobile number"
-                  value={formData.mobile}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm animate-slide-up">
-                {error}
-              </div>
-            )}
-
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => setLoginType(null)}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Set the role when login type changes
-  React.useEffect(() => {
-    if (loginType === 'Distributor' || loginType === 'Dealer') {
-      setFormData(prev => ({ ...prev, role: loginType }));
+  useEffect(() => {
+    if (loginType === "Distributor" || loginType === "Dealer") {
+      setFormData((prev) => ({ ...prev, role: loginType }));
     }
   }, [loginType]);
 
-  if (!loginType) {
-    return renderLoginTypeSelection();
-  }
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
 
-  if (loginType === 'Company') {
-    return renderCompanyLogin();
-  }
+  const authenticate = async (executor) => {
+    setStatus({ loading: true, error: "" });
+    try {
+      const response = await executor();
+      const { user } = response.data;
+      setUser(user);
+      setToken(response.data.token || "logged-in");
+    } catch (err) {
+      setStatus({
+        loading: false,
+        error: err.response?.data?.msg || "Login failed. Please try again."
+      });
+      return;
+    }
+    setStatus({ loading: false, error: "" });
+  };
 
-  return renderPhoneLogin();
+  const handleCompanyLogin = (e) => {
+    e.preventDefault();
+    authenticate(() => login(formData.username, formData.password));
+  };
+
+  const handlePhoneLogin = (e) => {
+    e.preventDefault();
+    authenticate(() => loginWithPhone(formData.mobile, formData.role));
+  };
+
+  const renderShell = (children) => (
+    <div className="min-h-screen bg-gradient-to-br from-[#faf7f1] via-white to-[#f5efe4] flex items-center justify-center px-4 py-12">
+      <motion.div
+        variants={cardVariant}
+        initial="hidden"
+        animate="visible"
+        className="w-full max-w-xl rounded-[32px] border border-white/60 bg-white/90 shadow-[0_30px_120px_rgba(17,24,39,0.12)] backdrop-blur-xl p-10 space-y-10"
+      >
+        <div className="text-center space-y-3">
+          <div className="mx-auto h-20 w-20 rounded-3xl bg-gradient-to-br from-accent-200 via-accent-400 to-accent-500 flex items-center justify-center text-3xl text-white shadow-lg shadow-accent-200/60 animate-float">
+            ✨
+          </div>
+          <p className="text-sm uppercase tracking-[0.4em] text-gray-500">Star Network Suite</p>
+          <h1 className="text-3xl font-semibold text-gray-900">Welcome back</h1>
+          <p className="text-gray-500">
+            Unified access for Company, Distributor and Dealer partners.
+          </p>
+        </div>
+        {children}
+      </motion.div>
+    </div>
+  );
+
+  const renderSelector = () =>
+    renderShell(
+      <div className="space-y-4">
+        {status.error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-2 rounded-2xl">
+            {status.error}
+          </p>
+        )}
+        <button className={baseButton} onClick={() => setLoginType("Company")}>
+          <span className="flex items-center space-x-3">
+            <span className="text-2xl">👑</span>
+            <span>Company Admin</span>
+          </span>
+          <span className="text-sm text-gray-400">SSO credentials</span>
+        </button>
+        <button className={baseButton} onClick={() => setLoginType("Distributor")}>
+          <span className="flex items-center space-x-3">
+            <span className="text-2xl">🏢</span>
+            <span>Distributor</span>
+          </span>
+          <span className="text-sm text-gray-400">OTP-less phone</span>
+        </button>
+        <button className={baseButton} onClick={() => setLoginType("Dealer")}>
+          <span className="flex items-center space-x-3">
+            <span className="text-2xl">🤝</span>
+            <span>Dealer</span>
+          </span>
+          <span className="text-sm text-gray-400">Phone based access</span>
+        </button>
+      </div>
+    );
+
+  const renderCompanyForm = () =>
+    renderShell(
+      <form className="space-y-6" onSubmit={handleCompanyLogin}>
+        <div className="space-y-4">
+          <label className="block text-left">
+            <span className="text-sm text-gray-500">Username</span>
+            <input
+              className="mt-2 w-full rounded-2xl border border-gray-200 bg-white/60 px-4 py-3 focus:ring-2 focus:ring-accent-300 focus:border-accent-400 transition"
+              type="text"
+              name="username"
+              placeholder="admin@starnetwork"
+              value={formData.username}
+              onChange={handleChange}
+              required
+            />
+          </label>
+          <label className="block text-left">
+            <span className="text-sm text-gray-500">Password</span>
+            <input
+              className="mt-2 w-full rounded-2xl border border-gray-200 bg-white/60 px-4 py-3 focus:ring-2 focus:ring-accent-300 focus:border-accent-400 transition"
+              type="password"
+              name="password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </label>
+        </div>
+        {status.error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-2 rounded-2xl">
+            {status.error}
+          </p>
+        )}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={() => setLoginType(null)}
+            className="flex-1 rounded-2xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+          >
+            Back
+          </button>
+          <button
+            type="submit"
+            disabled={status.loading}
+            className="flex-1 rounded-2xl bg-gradient-to-r from-gray-900 to-gray-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-gray-800/30 hover:brightness-105 transition disabled:opacity-60"
+          >
+            {status.loading ? "Authenticating..." : "Sign in securely"}
+          </button>
+        </div>
+        <p className="text-xs text-center text-gray-400">Default: admin / admin123</p>
+      </form>
+    );
+
+  const renderPhoneForm = () =>
+    renderShell(
+      <form className="space-y-6" onSubmit={handlePhoneLogin}>
+        <label className="block text-left">
+          <span className="text-sm text-gray-500">Mobile number</span>
+          <input
+            className="mt-2 w-full rounded-2xl border border-gray-200 bg-white/60 px-4 py-3 focus:ring-2 focus:ring-accent-300 focus:border-accent-400 transition"
+            type="tel"
+            name="mobile"
+            placeholder="+91 98765 43210"
+            value={formData.mobile}
+            onChange={handleChange}
+            required
+          />
+        </label>
+        {status.error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-2 rounded-2xl">
+            {status.error}
+          </p>
+        )}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={() => setLoginType(null)}
+            className="flex-1 rounded-2xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+          >
+            Back
+          </button>
+          <button
+            type="submit"
+            disabled={status.loading}
+            className="flex-1 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-400/50 hover:brightness-105 transition disabled:opacity-60"
+          >
+            {status.loading ? "Connecting..." : "Continue"}
+          </button>
+        </div>
+      </form>
+    );
+
+  if (!loginType) return renderSelector();
+  if (loginType === "Company") return renderCompanyForm();
+  return renderPhoneForm();
 }

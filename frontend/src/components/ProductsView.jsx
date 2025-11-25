@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import { getAllProducts, getMyProductAllocations, getProfile } from "../api/api";
 
 export default function ProductsView() {
@@ -31,12 +33,13 @@ export default function ProductsView() {
       }
     } catch (error) {
       console.error("Error loading products:", error);
+      toast.error("Unable to load products. Please retry.");
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products.filter((product) => {
     const search = searchTerm.toLowerCase();
     const description = (product.itemDescription || product.name || "").toLowerCase();
     const itemNo = (product.itemNo || "").toLowerCase();
@@ -44,197 +47,151 @@ export default function ProductsView() {
     return description.includes(search) || itemNo.includes(search) || allocationInfo.includes(search);
   });
 
+  const renderInvoiceAction = (product) => {
+    const availableQty = product.allocation?.qty || 0;
+    const canInvoice = userRole === "Company" || availableQty > 0;
+
+    return (
+      <button
+        type="button"
+        onClick={() =>
+          toast.success(
+            userRole === "Company"
+              ? `Open the invoice tab to allocate ${product.itemDescription || product.itemNo}.`
+              : `Navigate to invoices to allocate ${availableQty} units of ${product.itemDescription || product.itemNo}.`
+          )
+        }
+        disabled={!canInvoice}
+        className={`px-4 py-2 rounded-2xl text-sm font-semibold ${
+          canInvoice
+            ? "bg-gradient-to-r from-gray-900 to-gray-700 text-white shadow"
+            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+        }`}
+      >
+        {canInvoice ? "Invoice" : "Out of stock"}
+      </button>
+    );
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="bg-white shadow-xl rounded-2xl p-8 border border-gray-100">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Product Catalog</h1>
-            <p className="text-gray-600 text-lg">Browse available products and reward points</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-primary-600">{products.length}</div>
-            <div className="text-sm text-gray-500">Available Products</div>
-          </div>
+      <div className="rounded-3xl border border-white/60 bg-white/90 shadow-xl p-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.35em] text-gray-400">Product catalog</p>
+          <h1 className="text-3xl font-semibold text-gray-900">Available products</h1>
+          <p className="text-gray-500">Live view of every SKU and distributor allocation.</p>
+        </div>
+        <div className="text-right">
+          <p className="text-4xl font-bold text-gray-900">{products.length}</p>
+          <p className="text-sm text-gray-500">Tracked SKUs</p>
         </div>
       </div>
 
-      {/* Access banner */}
       {scope === "allocated" && (
-        <div className="bg-gradient-to-r from-yellow-50 via-white to-white border border-yellow-200 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center text-white text-lg">
-              ⭐
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-yellow-900">
-                Products allocated to you by {userRole === "Distributor" ? "the Company" : "your Distributor"}
-              </h3>
-              <p className="text-sm text-yellow-800">
-                Quantities update automatically whenever a new invoice arrives. Only available stock is shown here.
-              </p>
-            </div>
+        <div className="rounded-3xl border border-accent-200 bg-accent-50/60 p-6 flex items-center space-x-4">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-accent-400 to-accent-500 text-white flex items-center justify-center">
+            ⭐
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-accent-800">
+              Allocated by {userRole === "Distributor" ? "Company HQ" : "your Distributor"}
+            </p>
+            <p className="text-sm text-accent-700">
+              Inventory updates automatically whenever a new invoice arrives. Quantities shown below are live.
+            </p>
           </div>
         </div>
       )}
 
-      {/* Search */}
-      <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
+      <div className="rounded-3xl border border-white/70 bg-white p-6">
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gray-400 text-lg">🔍</span>
-          </div>
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">🔍</div>
           <input
             type="text"
             placeholder="Search products by item number or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            className="w-full rounded-2xl border border-gray-200 pl-12 pr-4 py-3 focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
           />
         </div>
       </div>
 
-      {/* Products Grid */}
-      <div className="bg-white shadow-xl rounded-2xl border border-gray-100">
-        <div className="p-8">
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading products...</p>
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-400 text-6xl mb-4">📦</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm ? 'No products found' : 'No products available'}
-              </h3>
-              <p className="text-gray-500">
-                {searchTerm ? 'Try adjusting your search terms' : 'Products will appear here when available'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.map(product => {
-                const rewardsPerPiece = product.rewardsPerPc ?? product.pointsPerUnit ?? 0;
-                const rewardsPerDozen = product.rewardsPerDozen ?? rewardsPerPiece * 12;
-                const rewardsForBox = product.rewardsForBox ?? rewardsPerPiece * (product.boxQuantity || 0);
-                const rewardsForCarton = product.rewardsForCarton ?? rewardsPerPiece * (product.cartonQuantity || 0);
-                const allocationInfo = product.allocation;
-                const allocationPieces = Number(allocationInfo?.pieces ?? allocationInfo?.qty ?? 0);
-
-                return (
-                  <div key={product._id} className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-3">
-                          {product.imageURL ? (
-                            <img
-                              src={product.imageURL}
-                              alt={product.itemDescription || product.itemNo}
-                              className="h-12 w-12 rounded-xl object-cover border border-gray-200"
-                            />
-                          ) : (
-                            <div className="h-12 w-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
-                              <span className="text-white font-bold text-lg">
-                                {(product.itemDescription || product.itemNo || "?").charAt(0)}
-                              </span>
-                            </div>
-                          )}
+      <div className="rounded-3xl border border-white/70 bg-white/80 shadow-lg overflow-hidden">
+        {loading ? (
+          <div className="py-16 text-center text-gray-500">Loading products...</div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-gray-500">No products match your filters.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <thead className="bg-gray-50/60">
+                <tr>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-500">Product</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-500">Item No</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-500">Rewards / piece</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-500">Available stock</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-500">Status</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-500">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredProducts.map((product) => {
+                  const rewardsPerPiece = product.rewardsPerPc ?? product.pointsPerUnit ?? 0;
+                  const availablePieces =
+                    userRole === "Company"
+                      ? "Unlimited"
+                      : `${product.allocation?.qty || 0} ${product.allocation?.uom || ""}`;
+                  return (
+                    <motion.tr
+                      key={product._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="hover:bg-gray-50/60"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 rounded-2xl bg-gray-100 text-gray-600 flex items-center justify-center text-lg font-semibold">
+                            {(product.itemDescription || product.itemNo || "?").slice(0, 2).toUpperCase()}
+                          </div>
                           <div>
-                            <h3 className="text-xl font-bold text-gray-900">
-                              {product.itemDescription || product.name}
-                            </h3>
-                            <p className="text-sm text-gray-600">{product.itemNo}</p>
+                            <p className="font-medium text-gray-900">{product.itemDescription || product.name}</p>
+                            <p className="text-xs text-gray-500">
+                              Box {product.boxQuantity || 0} • Carton {product.cartonQuantity || 0}
+                            </p>
                           </div>
                         </div>
-                        
-                        {product.imageURL && (
-                          <div className="mb-4">
-                          <img 
-                            src={product.imageURL} 
-                            alt={product.itemDescription || product.itemNo}
-                              className="w-full h-32 object-cover rounded-lg"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
-                        
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Rewards / Piece:</span>
-                            <span className="text-lg font-bold text-primary-600">
-                              {rewardsPerPiece.toLocaleString()} pts
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm text-gray-600">
-                            <span>Rewards / Dozen:</span>
-                            <span className="font-semibold text-primary-600">
-                              {rewardsPerDozen.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                            <div>Box Qty: {product.boxQuantity || 0}</div>
-                            <div>Carton Qty: {product.cartonQuantity || 0}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          product.status === 'Active'
-                            ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800'
-                            : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800'
-                        }`}>
-                          {product.status === 'Active' ? '✅ Active' : '❌ Inactive'}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{product.itemNo || "—"}</td>
+                      <td className="px-6 py-4 text-gray-900 font-semibold">{rewardsPerPiece.toLocaleString()} pts</td>
+                      <td className="px-6 py-4 text-gray-700">{availablePieces}</td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            product.status === "Active"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {product.status}
                         </span>
-                        <div className="text-right">
-                          <div className="text-sm font-medium text-gray-900">
-                            Earn {rewardsPerPiece.toLocaleString()} pts / pc
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            Box: {rewardsForBox.toLocaleString()} | Carton: {rewardsForCarton.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      {allocationInfo && (
-                        <div className="mt-4 rounded-xl border border-yellow-200 bg-gradient-to-r from-yellow-50 to-white p-4">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-yellow-800 font-medium">Available Inventory</span>
-                            <span className="text-yellow-900 font-bold">
-                              {allocationInfo.qty} {allocationInfo.uom}
-                            </span>
-                          </div>
-                          <p className="text-xs text-yellow-700 mt-1">
-                            ≈ {allocationPieces.toLocaleString()} pieces ready to allocate
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                      </td>
+                      <td className="px-6 py-4">{renderInvoiceAction(product)}</td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Summary */}
       {filteredProducts.length > 0 && (
-        <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-2xl p-6 border border-primary-200">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-primary-800 mb-2">
-              Product Summary
-            </h3>
-            <p className="text-primary-700">
-              Showing {filteredProducts.length} of {products.length} products
-              {searchTerm && ` matching "${searchTerm}"`}
-            </p>
-          </div>
+        <div className="rounded-3xl border border-white/70 bg-white/80 p-6 text-center text-sm text-gray-500">
+          Showing {filteredProducts.length} of {products.length} products
+          {searchTerm && ` for “${searchTerm}”`}
         </div>
       )}
     </div>

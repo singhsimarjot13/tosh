@@ -84,16 +84,26 @@ const ensureDistributorProductAccess = async (distributorId, items = []) => {
     productID: { $in: productIds }
   }).select("productID qty");
 
-  if (allocations.length !== productIds.length) {
-    throw new Error("Attempting to invoice an unallocated product");
-  }
+  const allocationMap = allocations.reduce((map, allocation) => {
+    map.set(allocation.productID.toString(), allocation);
+    return map;
+  }, new Map());
 
-  allocations.forEach((allocation) => {
-    const requiredQty = requirements[allocation.productID.toString()] || 0;
-    if (allocation.qty < requiredQty) {
-      throw new Error("Insufficient allocated quantity for one of the selected products");
+  for (const productId of productIds) {
+    const requiredQty = requirements[productId] || 0;
+    const allocation = allocationMap.get(productId);
+    const availableQty = Number(allocation?.qty || 0);
+
+    if (availableQty < requiredQty) {
+      const error = new Error("Transfer quantity exceeds available stock");
+      error.details = {
+        productId,
+        requestedQty: requiredQty,
+        availableQty
+      };
+      throw error;
     }
-  });
+  }
 };
 export const getMyInvoices = async (req, res) => {
   try {

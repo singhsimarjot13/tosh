@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
 import {
   createCompanyInvoice,
   createDistributorInvoice,
@@ -76,8 +77,10 @@ export default function InvoiceManagement({ onInvoiceCreated }) {
       await loadInvoiceData();
       await loadFormData();
       onInvoiceCreated?.();
+      toast.success("Invoice created for distributor.");
     } catch (error) {
       console.error("Error creating company invoice:", error);
+      toast.error(error.response?.data?.msg || "Failed to create invoice.");
     } finally {
       setLoading(false);
     }
@@ -91,8 +94,10 @@ export default function InvoiceManagement({ onInvoiceCreated }) {
       await loadInvoiceData();
       await loadFormData();
       onInvoiceCreated?.();
+      toast.success("Invoice created for dealer.");
     } catch (error) {
       console.error("Error creating distributor invoice:", error);
+      toast.error(error.response?.data?.msg || "Failed to create invoice.");
     } finally {
       setLoading(false);
     }

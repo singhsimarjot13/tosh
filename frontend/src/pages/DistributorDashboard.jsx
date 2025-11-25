@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { getDealers, createDealer, getWalletBalance, getWalletTransactions, getUserInvoices, distributorDeductDealer, uploadDealers, getProfile } from "../api/api";
 import ProductsView from "../components/ProductsView";
 import InvoiceManagement from "../components/InvoiceManagement";
@@ -95,7 +96,7 @@ export default function DistributorDashboard({user}) {
 	const handleDeductSubmit = async (e) => {
 		e.preventDefault();
 		if (!deductForm.dealerId || !deductForm.points || Number(deductForm.points) <= 0) {
-			alert('Please enter a positive points value.');
+			toast.error('Please enter a positive points value.');
 			return;
 		}
 		setDeductSubmitting(true);
@@ -104,10 +105,10 @@ export default function DistributorDashboard({user}) {
 			setShowDeductModal(false);
 			setDeductForm({ dealerId: '', points: '', note: '' });
 			await loadData();
-			alert('Points deducted successfully');
+			toast.success('Points deducted successfully');
 		} catch (err) {
 			const msg = err?.response?.data?.msg || 'Failed to deduct points';
-			alert(msg);
+			toast.error(msg);
 		} finally {
 			setDeductSubmitting(false);
 		}
@@ -129,11 +130,11 @@ export default function DistributorDashboard({user}) {
     setLoading(true);
     try {
       const res = await uploadDealers(file); // no distributorID required
-      alert(`✔ Dealer Upload Complete\nSuccess: ${res.data.successCount}\nFailed: ${res.data.failedCount}`);
+      toast.success(`Dealers processed • Success: ${res.data.successCount}, Failed: ${res.data.failedCount}`);
       loadData();
     } catch (err) {
       console.error(err);
-      alert("Failed to upload dealers");
+      toast.error(err.response?.data?.msg || "Failed to upload dealers");
     } finally {
       setLoading(false);
     }
