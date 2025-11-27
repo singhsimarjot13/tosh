@@ -13,7 +13,15 @@ const navConfig = {
     { id: "content", label: "Content", path: "/content", icon: "📁" },
     { id: "wallets", label: "Wallets", path: "/wallets", icon: "💰" }
   ],
-  Distributor: [{ id: "dashboard", label: "Dashboard", path: "/", icon: "📊" }],
+  Distributor: [
+    { id: "overview", label: "Overview", path: "/overview", icon: "📊" },
+    { id: "my-products", label: "My Products", path: "/my-products", icon: "📦" },
+    { id: "upload-dealers", label: "Upload Dealers", path: "/upload-dealers", icon: "📤" },
+    { id: "all-products", label: "All Products", path: "/all-products", icon: "🛒" },
+    { id: "invoices", label: "Invoices", path: "/invoices", icon: "📄" },
+    { id: "wallet", label: "Wallet", path: "/wallet", icon: "💰" },
+    { id: "content", label: "SN News", path: "/content", icon: "📁" }
+  ],
   Dealer: [{ id: "dashboard", label: "Dashboard", path: "/", icon: "📊" }]
 };
 
@@ -37,10 +45,10 @@ export default function Layout({ children, user, setUser, setToken }) {
   const content = children ?? <Outlet />;
 
   return (
-    <div className="flex min-h-screen bg-[#0f1014] text-white">
-      <aside className="hidden w-64 flex-col border-r border-white/5 bg-[#0b0c10] px-4 py-8 lg:flex">
-        <div className="mb-10 px-2">
-          <p className="text-xs uppercase tracking-[0.5em] text-gray-400">SN Brothers</p>
+    <div className="flex min-h-screen bg-[#08090c] text-white">
+      <aside className="hidden w-64 flex-col border-r border-white/5 bg-[#0c0d11] px-5 py-8 lg:flex">
+        <div className="mb-10 px-1">
+          <p className="text-xs uppercase tracking-[0.5em] text-gray-500">SN Brothers</p>
           <p className="text-2xl font-semibold text-white">Command Hub</p>
         </div>
         <nav className="space-y-2">
@@ -51,15 +59,29 @@ export default function Layout({ children, user, setUser, setToken }) {
               className={({ isActive }) =>
                 [
                   "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
-                  isActive ? "bg-white/10 text-white shadow-lg shadow-black/30" : "text-gray-400 hover:text-white hover:bg-white/5"
+                  isActive
+                    ? "bg-gradient-to-r from-white/10 to-white/5 text-white shadow-lg shadow-black/30"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 ].join(" ")
               }
             >
               <span className="text-lg">{item.icon}</span>
-              {item.label}
+              <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
+        <div className="mt-auto space-y-3 pt-8">
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.4em] text-gray-400">Signed in</p>
+            <p className="text-sm font-semibold text-white">{user?.name || "—"}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-white/10 hover:text-white"
+          >
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Mobile Sidebar */}
@@ -96,21 +118,9 @@ export default function Layout({ children, user, setUser, setToken }) {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col bg-gradient-to-br from-white to-[#f5f3ee] text-gray-900">
-        <header className="flex items-center justify-between border-b border-gray-200 bg-white/90 px-6 py-4 shadow-sm">
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-gray-400">Welcome</p>
-            <p className="text-lg font-semibold text-gray-900">{user?.name}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="rounded-2xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-900 hover:text-white"
-          >
-            Logout
-          </button>
-        </header>
-        <main className="flex-1 px-4 py-8 md:px-8">
-          <div className="mx-auto max-w-7xl space-y-8">{content}</div>
+      <div className="flex flex-1 flex-col bg-gradient-to-br from-[#0f1014] via-[#111217] to-[#090a0d] text-gray-100">
+        <main className="flex-1 px-4 py-8 md:px-10">
+          <div className="mx-auto max-w-7xl">{content}</div>
         </main>
       </div>
     </div>

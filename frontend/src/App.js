@@ -4,7 +4,6 @@ import { Toaster } from "react-hot-toast";
 import { getProfile } from "./api/api";
 import Login from "./components/Login";
 import Layout from "./components/Layout";
-import DistributorDashboard from "./pages/DistributorDashboard";
 import DealerDashboard from "./pages/DealerDashboard";
 import CompanyOverview from "./pages/company/CompanyOverview";
 import CompanyDistributors from "./pages/company/CompanyDistributors";
@@ -14,6 +13,15 @@ import CompanyInvoices from "./pages/company/CompanyInvoices";
 import CompanyAnalytics from "./pages/company/CompanyAnalytics";
 import CompanyContent from "./pages/company/CompanyContent";
 import CompanyWallets from "./pages/company/CompanyWallets";
+import {
+  DistributorAllProducts,
+  DistributorContent,
+  DistributorInvoices,
+  DistributorMyProducts,
+  DistributorOverview,
+  DistributorUploadDealers,
+  DistributorWallet
+} from "./pages/distributor";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -44,12 +52,6 @@ function App() {
 
   if (bootstrapping) return null;
 
-  const renderNonCompany = () => {
-    if (user?.role === "Distributor") return <DistributorDashboard user={user} />;
-    if (user?.role === "Dealer") return <DealerDashboard user={user} />;
-    return null;
-  };
-
   if (!user) {
     return (
       <>
@@ -59,7 +61,28 @@ function App() {
     );
   }
 
-  if (user.role !== "Company") {
+  if (user.role === "Distributor") {
+    return (
+      <BrowserRouter>
+        <Layout user={user} setUser={setUser} setToken={() => {}}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/overview" replace />} />
+            <Route path="/overview" element={<DistributorOverview />} />
+            <Route path="/my-products" element={<DistributorMyProducts />} />
+            <Route path="/upload-dealers" element={<DistributorUploadDealers />} />
+            <Route path="/all-products" element={<DistributorAllProducts />} />
+            <Route path="/invoices" element={<DistributorInvoices />} />
+            <Route path="/wallet" element={<DistributorWallet />} />
+            <Route path="/content" element={<DistributorContent />} />
+            <Route path="*" element={<Navigate to="/overview" replace />} />
+          </Routes>
+        </Layout>
+        <Toaster position="top-center" />
+      </BrowserRouter>
+    );
+  }
+
+  if (user.role === "Dealer") {
     return (
       <BrowserRouter>
         <Routes>
@@ -67,7 +90,7 @@ function App() {
             path="/*"
             element={
               <Layout user={user} setUser={setUser} setToken={() => {}}>
-                {renderNonCompany()}
+                <DealerDashboard user={user} />
               </Layout>
             }
           />
