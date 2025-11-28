@@ -22,7 +22,13 @@ const navConfig = {
     { id: "wallet", label: "Wallet", path: "/wallet", icon: "💰" },
     { id: "content", label: "SN News", path: "/content", icon: "📁" }
   ],
-  Dealer: [{ id: "dashboard", label: "Dashboard", path: "/", icon: "📊" }]
+  Dealer: [
+    { id: "overview", label: "Overview", path: "/overview", icon: "📊" },
+    { id: "all-products", label: "All Products", path: "/all-products", icon: "📦" },
+    { id: "invoices", label: "Invoices", path: "/invoices", icon: "📄" },
+    { id: "wallet", label: "Wallet", path: "/wallet", icon: "💰" },
+    { id: "content", label: "SN News", path: "/content", icon: "📁" }
+  ]
 };
 
 const FallbackLinks = [{ id: "overview", label: "Overview", path: "/", icon: "📊" }];

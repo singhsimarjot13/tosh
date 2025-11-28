@@ -4,7 +4,6 @@ import { Toaster } from "react-hot-toast";
 import { getProfile } from "./api/api";
 import Login from "./components/Login";
 import Layout from "./components/Layout";
-import DealerDashboard from "./pages/DealerDashboard";
 import CompanyOverview from "./pages/company/CompanyOverview";
 import CompanyDistributors from "./pages/company/CompanyDistributors";
 import CompanyDealers from "./pages/company/CompanyDealers";
@@ -22,6 +21,13 @@ import {
   DistributorUploadDealers,
   DistributorWallet
 } from "./pages/distributor";
+import {
+  DealerAllProducts,
+  DealerContent,
+  DealerInvoices,
+  DealerOverview,
+  DealerWallet
+} from "./pages/dealer";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -85,16 +91,17 @@ function App() {
   if (user.role === "Dealer") {
     return (
       <BrowserRouter>
-        <Routes>
-          <Route
-            path="/*"
-            element={
-              <Layout user={user} setUser={setUser} setToken={() => {}}>
-                <DealerDashboard user={user} />
-              </Layout>
-            }
-          />
-        </Routes>
+        <Layout user={user} setUser={setUser} setToken={() => {}}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/overview" replace />} />
+            <Route path="/overview" element={<DealerOverview />} />
+            <Route path="/all-products" element={<DealerAllProducts />} />
+            <Route path="/invoices" element={<DealerInvoices />} />
+            <Route path="/wallet" element={<DealerWallet />} />
+            <Route path="/content" element={<DealerContent />} />
+            <Route path="*" element={<Navigate to="/overview" replace />} />
+          </Routes>
+        </Layout>
         <Toaster position="top-center" />
       </BrowserRouter>
     );
