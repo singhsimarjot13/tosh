@@ -68,20 +68,48 @@ export default function CompanyDistributors() {
     setSingleDistributor({ bpCode: "", bpName: "", mobile: "", state: "" });
   };
 
-  const paged = distributors.slice((page - 1) * pageSize, page * pageSize);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredDistributors = distributors.filter((dist) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      dist.name?.toLowerCase().includes(query) ||
+      dist.bpCode?.toLowerCase().includes(query) ||
+      dist.mobile?.toLowerCase().includes(query) ||
+      dist.billToState?.toLowerCase().includes(query)
+    );
+  });
+
+  const paged = filteredDistributors.slice((page - 1) * pageSize, page * pageSize);
+
+  const excelHeaders = ["BP Code", "BP Name", "Mobile Phone", "Bill-to State"];
 
   return (
     <div className="space-y-8">
-      <p className="text-sm uppercase tracking-[0.4em] text-gray-400">Distributors</p>
+      <p className="text-sm uppercase tracking-[0.4em] text-gray-500">Distributors</p>
       <div className="grid gap-6 lg:grid-cols-2">
-        <UploadCard
-          title="Bulk upload"
-          description="Use the distributor template to onboard multiple partners."
-          icon="🏢"
-          onSubmit={handleDistributorUpload}
-          result={uploadResult}
-        />
-        <form onSubmit={handleSingleSubmit} className="space-y-4 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Bulk Upload</p>
+          <p className="text-sm text-gray-600 mb-4">Use the distributor template to onboard multiple partners.</p>
+          <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+            <p className="text-xs font-semibold text-gray-700 mb-2">Required Excel Headers:</p>
+            <div className="flex flex-wrap gap-2">
+              {excelHeaders.map((header, idx) => (
+                <span key={idx} className="rounded-lg bg-white px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200">
+                  {header}
+                </span>
+              ))}
+            </div>
+          </div>
+          <UploadCard
+            title="Bulk upload"
+            description="Upload Excel file with distributor data."
+            icon="🏢"
+            onSubmit={handleDistributorUpload}
+            result={uploadResult}
+          />
+        </div>
+        <form onSubmit={handleSingleSubmit} className="space-y-4 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
           <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Single distributor</p>
           <div className="grid gap-4 md:grid-cols-2">
             {[
@@ -113,24 +141,38 @@ export default function CompanyDistributors() {
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-100 border-t-transparent" />
         </div>
       ) : (
-        <div className="space-y-4 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <span>Total distributors</span>
-            <span>{formatNumber(distributors.length)}</span>
+        <div className="space-y-4 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>Total distributors</span>
+              <span className="ml-4">{formatNumber(filteredDistributors.length)}</span>
+            </div>
+            <div className="flex-1 max-w-md ml-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search distributors..."
+                className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
+              />
+            </div>
           </div>
           <div className="grid gap-4">
             {paged.map((dist) => (
-              <div key={dist._id} className="flex flex-wrap items-center justify-between rounded-3xl border border-gray-100 bg-gray-50/80 px-4 py-3">
+              <div key={dist._id} className="flex flex-wrap items-center justify-between rounded-3xl border border-gray-200 bg-gray-50 px-4 py-3">
                 <div>
                   <p className="font-semibold text-gray-900">{dist.name}</p>
                   <p className="text-xs text-gray-500">BP: {dist.bpCode || "—"}</p>
                 </div>
                 <p className="text-sm text-gray-500">{dist.billToState || "—"}</p>
-                <span className="rounded-full bg-gray-900/90 px-3 py-1 text-xs font-semibold text-white">{dist.mobile || "—"}</span>
+                <span className="rounded-full bg-gray-700 px-3 py-1 text-xs font-semibold text-white">{dist.mobile || "—"}</span>
               </div>
             ))}
           </div>
-          <Pagination page={page} pageSize={pageSize} total={distributors.length} onChange={setPage} />
+          <Pagination page={page} pageSize={pageSize} total={filteredDistributors.length} onChange={setPage} />
         </div>
       )}
     </div>

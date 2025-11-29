@@ -80,17 +80,163 @@ export default function CompanyAnalytics() {
     )[0];
   }, [distributors, invoices]);
 
+  const now = new Date();
+  const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const last90Days = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+  const companyToDistributor30DaysList = useMemo(() => {
+    const filtered = invoices.filter(
+      (inv) =>
+        inv.createdByRole === "Company" &&
+        inv.toUser?.role === "Distributor" &&
+        new Date(inv.invoiceDate || inv.date) >= last30Days
+    );
+    const grouped = filtered.reduce((acc, inv) => {
+      const distId = inv.toUser?._id;
+      const distName = inv.toUser?.name || "Unknown";
+      if (!acc[distId]) {
+        acc[distId] = { name: distName, count: 0 };
+      }
+      acc[distId].count += 1;
+      return acc;
+    }, {});
+    return Object.values(grouped).sort((a, b) => b.count - a.count);
+  }, [invoices]);
+
+  const companyToDistributor90DaysList = useMemo(() => {
+    const filtered = invoices.filter(
+      (inv) =>
+        inv.createdByRole === "Company" &&
+        inv.toUser?.role === "Distributor" &&
+        new Date(inv.invoiceDate || inv.date) >= last90Days
+    );
+    const grouped = filtered.reduce((acc, inv) => {
+      const distId = inv.toUser?._id;
+      const distName = inv.toUser?.name || "Unknown";
+      if (!acc[distId]) {
+        acc[distId] = { name: distName, count: 0 };
+      }
+      acc[distId].count += 1;
+      return acc;
+    }, {});
+    return Object.values(grouped).sort((a, b) => b.count - a.count);
+  }, [invoices]);
+
+  const distributorToDealer30DaysList = useMemo(() => {
+    const filtered = invoices.filter(
+      (inv) =>
+        inv.createdByRole === "Distributor" &&
+        inv.toUser?.role === "Dealer" &&
+        new Date(inv.invoiceDate || inv.date) >= last30Days
+    );
+    const grouped = filtered.reduce((acc, inv) => {
+      const dealerId = inv.toUser?._id;
+      const dealerName = inv.toUser?.name || "Unknown";
+      if (!acc[dealerId]) {
+        acc[dealerId] = { name: dealerName, count: 0 };
+      }
+      acc[dealerId].count += 1;
+      return acc;
+    }, {});
+    return Object.values(grouped).sort((a, b) => b.count - a.count);
+  }, [invoices]);
+
+  const distributorToDealer90DaysList = useMemo(() => {
+    const filtered = invoices.filter(
+      (inv) =>
+        inv.createdByRole === "Distributor" &&
+        inv.toUser?.role === "Dealer" &&
+        new Date(inv.invoiceDate || inv.date) >= last90Days
+    );
+    const grouped = filtered.reduce((acc, inv) => {
+      const dealerId = inv.toUser?._id;
+      const dealerName = inv.toUser?.name || "Unknown";
+      if (!acc[dealerId]) {
+        acc[dealerId] = { name: dealerName, count: 0 };
+      }
+      acc[dealerId].count += 1;
+      return acc;
+    }, {});
+    return Object.values(grouped).sort((a, b) => b.count - a.count);
+  }, [invoices]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-12 w-12 animate-spin rounded-full border-2 border-gray-100 border-t-transparent" />
+        <div className="h-12 w-12 animate-spin rounded-full border-2 border-gray-300 border-t-transparent" />
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <p className="text-sm uppercase tracking-[0.4em] text-gray-400">Analytics</p>
+      <p className="text-sm uppercase tracking-[0.4em] text-gray-500">Analytics</p>
+      
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Company → Distributor Invoices (Last 30 Days)</p>
+          {companyToDistributor30DaysList.length === 0 ? (
+            <p className="text-sm text-gray-500">No invoices in the last 30 days.</p>
+          ) : (
+            <ul className="space-y-2">
+              {companyToDistributor30DaysList.map((item, idx) => (
+                <li key={idx} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                  <span className="text-lg font-semibold text-gray-900">{formatNumber(item.count)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Company → Distributor Invoices (Last 90 Days)</p>
+          {companyToDistributor90DaysList.length === 0 ? (
+            <p className="text-sm text-gray-500">No invoices in the last 90 days.</p>
+          ) : (
+            <ul className="space-y-2">
+              {companyToDistributor90DaysList.map((item, idx) => (
+                <li key={idx} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                  <span className="text-lg font-semibold text-gray-900">{formatNumber(item.count)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Distributor → Dealer Invoices (Last 30 Days)</p>
+          {distributorToDealer30DaysList.length === 0 ? (
+            <p className="text-sm text-gray-500">No invoices in the last 30 days.</p>
+          ) : (
+            <ul className="space-y-2">
+              {distributorToDealer30DaysList.map((item, idx) => (
+                <li key={idx} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                  <span className="text-lg font-semibold text-gray-900">{formatNumber(item.count)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Distributor → Dealer Invoices (Last 90 Days)</p>
+          {distributorToDealer90DaysList.length === 0 ? (
+            <p className="text-sm text-gray-500">No invoices in the last 90 days.</p>
+          ) : (
+            <ul className="space-y-2">
+              {distributorToDealer90DaysList.map((item, idx) => (
+                <li key={idx} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                  <span className="text-lg font-semibold text-gray-900">{formatNumber(item.count)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
       <div className="grid gap-6 md:grid-cols-3">
         <KpiCard label="Top dealers" value={formatNumber(topDealers.length)} icon="👥" />
         <KpiCard label="Top distributors" value={formatNumber(topDistributors.length)} icon="🏢" />
@@ -101,8 +247,8 @@ export default function CompanyAnalytics() {
           icon="⚠️"
         />
       </div>
-      <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-        <p className="text-xs uppercase tracking-[0.4em] text-gray-400">Top dealer performance</p>
+      <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        <p className="text-xs uppercase tracking-[0.4em] text-gray-500">Top dealer performance</p>
         <div className="mt-4 h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topDealers} margin={{ top: 10, right: 16, left: -18, bottom: 0 }}>
@@ -114,8 +260,8 @@ export default function CompanyAnalytics() {
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-        <p className="text-xs uppercase tracking-[0.4em] text-gray-400">Top distributor performance</p>
+      <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        <p className="text-xs uppercase tracking-[0.4em] text-gray-500">Top distributor performance</p>
         <div className="mt-4 h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topDistributors} margin={{ top: 10, right: 16, left: -18, bottom: 0 }}>

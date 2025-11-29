@@ -144,6 +144,12 @@ export const createDealer = async (req, res) => {
       return res.status(400).json({ msg: "Mobile number already registered" });
     }
 
+    // GET distributor details
+    const distributor = await User.findById(req.user.id).select("name bpCode");
+    if (!distributor) {
+      return res.status(400).json({ msg: "Distributor not found" });
+    }
+
     const dealer = new User({
       role: "Dealer",
       name,
@@ -152,7 +158,11 @@ export const createDealer = async (req, res) => {
       address,
       companyName,
       businessType,
+
       distributorID: req.user.id,
+      bpCode: distributor.bpCode,       // ✅ SAVE BP CODE
+      bpName: distributor.name,          // (optional)
+      
       createdBy: req.user.id
     });
 
@@ -165,14 +175,16 @@ export const createDealer = async (req, res) => {
         name: dealer.name,
         mobile: dealer.mobile,
         email: dealer.email,
-        companyName: dealer.companyName
+        companyName: dealer.companyName,
+        distributorBPCode: dealer.distributorBPCode  // return it
       }
     });
   } catch (error) {
-    console.error('Create dealer error:', error);
+    console.error("Create dealer error:", error);
     res.status(500).json({ msg: "Server error" });
   }
 };
+
 
 // Get all distributors (Company can see all)
 
@@ -206,6 +218,58 @@ export const getAllDealers = async (req, res) => {
     res.json({ dealers });
   } catch (error) {
     console.error('Get all dealers error:', error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// Update dealer (Distributor can update their dealers)
+export const updateDealer = async (req, res) => {
+  try {
+    const { name, mobile, email, address, companyName, businessType } = req.body;
+    const dealerId = req.params.id;
+
+    // Find the dealer
+    const dealer = await User.findById(dealerId);
+    if (!dealer || dealer.role !== "Dealer") {
+      return res.status(404).json({ msg: "Dealer not found" });
+    }
+
+    // Check if distributor owns this dealer
+    if (req.user.role === "Distributor" && dealer.distributorID.toString() !== req.user.id) {
+      return res.status(403).json({ msg: "You can only update your own dealers" });
+    }
+
+    // Update fields
+    if (name !== undefined) dealer.name = name;
+    if (mobile !== undefined) {
+      // Check if mobile is already taken by another user
+      const existingUser = await User.findOne({ mobile, _id: { $ne: dealerId } });
+      if (existingUser) {
+        return res.status(400).json({ msg: "Mobile number already registered" });
+      }
+      dealer.mobile = mobile;
+    }
+    if (email !== undefined) dealer.email = email;
+    if (address !== undefined) dealer.address = address;
+    if (companyName !== undefined) dealer.companyName = companyName;
+    if (businessType !== undefined) dealer.businessType = businessType;
+
+    await dealer.save();
+
+    res.json({
+      msg: "Dealer updated successfully",
+      dealer: {
+        id: dealer._id,
+        name: dealer.name,
+        mobile: dealer.mobile,
+        email: dealer.email,
+        address: dealer.address,
+        companyName: dealer.companyName,
+        businessType: dealer.businessType
+      }
+    });
+  } catch (error) {
+    console.error("Update dealer error:", error);
     res.status(500).json({ msg: "Server error" });
   }
 };

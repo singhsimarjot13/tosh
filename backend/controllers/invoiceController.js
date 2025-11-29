@@ -107,11 +107,23 @@ const ensureDistributorProductAccess = async (distributorId, items = []) => {
 };
 export const getMyInvoices = async (req, res) => {
   try {
-    const match = buildInvoiceMatch(req.user.role, req.user.id);
+    let match = {};
+
+    // ROLE WISE FILTERING
+    if (req.user.role === "Company") {
+      // Company should see ALL distributor → dealer invoices
+      match = {};
+    } 
+    else if (req.user.role === "Distributor") {
+      match = { fromUser: req.user.id };
+    }
+    else if (req.user.role === "Dealer") {
+      match = { toUser: req.user.id };
+    }
 
     const invoices = await Invoice.find(match)
-      .populate("fromUser", "name role")
-      .populate("toUser", "name role")
+      .populate("fromUser", "name role bpCode mobile")
+      .populate("toUser", "name role mobile bpCode")
       .populate("items.productID", "name imageURL itemDescription")
       .sort({ invoiceDate: -1 });
 
@@ -120,13 +132,16 @@ export const getMyInvoices = async (req, res) => {
       count: invoices.length,
       invoices
     });
+
   } catch (error) {
+    console.error("INVOICE FETCH ERROR:", error);
     return res.status(500).json({
       success: false,
       message: error.message
     });
   }
 };
+
 
 const normalizeUom = (value = "") => {
   const upper = String(value).trim().toUpperCase();
@@ -635,7 +650,7 @@ export const getMyProductAllocations = async (req, res) => {
     const allocations = await UserProductAllocation.find({ userID: req.user.id })
       .populate(
         "productID",
-        "itemDescription name description imageURL rewardsPerPc rewardsForBox rewardsForCarton rewardsPerDozen boxQuantity cartonQuantity status"
+        "itemDescription itemNo name description imageURL rewardsPerPc rewardsForBox rewardsForCarton rewardsPerDozen boxQuantity cartonQuantity status"
       )
       .sort({ updatedAt: -1 });
 

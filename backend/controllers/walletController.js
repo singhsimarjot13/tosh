@@ -33,10 +33,18 @@ export const getWalletTransactions = async (req, res) => {
 
     const [transactions, total] = await Promise.all([
       WalletTransaction.find({ userID: req.user.id })
+        .populate({
+          path: "sourceInvoiceID",
+          populate: [
+            { path: "fromUser", select: "name mobile bpCode role" },
+            { path: "toUser", select: "name mobile bpCode role" }
+          ]
+        })
         .populate("performedBy", "name role")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
+
       WalletTransaction.countDocuments({ userID: req.user.id })
     ]);
 
@@ -55,10 +63,18 @@ export const getWalletTransactions = async (req, res) => {
   }
 };
 
+
 export const getAllWallets = async (_req, res) => {
   try {
     const wallets = await Wallet.find({})
-      .populate("userID", "name role bpCode bpName")
+      .populate({
+        path: "userID",
+        select: "name role bpCode distributorID",
+        populate: {
+          path: "distributorID",
+          select: "name bpCode"
+        }
+      })
       .sort({ updatedAt: -1 });
 
     return res.json({
@@ -72,6 +88,7 @@ export const getAllWallets = async (_req, res) => {
     return res.status(500).json({ msg: "Failed to fetch wallets" });
   }
 };
+
 
 export const getWalletSummary = async (_req, res) => {
   try {
@@ -171,4 +188,36 @@ export const distributorDeductDealer = async (req, res) => {
     return res.status(400).json({ msg: error.message });
   }
 };
+
+export const companyDeductDealer = async (req, res) => {
+  try {
+    const { dealerId, points, note } = req.body;
+    const amount = Number(points);
+    if (!dealerId || !Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ msg: "Dealer and positive points are required" });
+    }
+
+    const dealer = await User.findById(dealerId);
+    if (!dealer || dealer.role !== "Dealer") {
+      return res.status(404).json({ msg: "Dealer not found" });
+    }
+
+    await applyWalletTransaction({
+      userID: dealer._id,
+      type: "Debit",
+      points: amount,
+      rewardDebited: amount,
+      createdByRole: "Company",
+      performedBy: req.user.id,
+      walletOwnerRole: dealer.role,
+      note: note || "Manual deduction by company"
+    });
+
+    return res.json({ msg: "Points deducted successfully" });
+  } catch (error) {
+    console.error("COMPANY DEDUCT DEALER ERROR:", error);
+    return res.status(400).json({ msg: error.message });
+  }
+};
+
 

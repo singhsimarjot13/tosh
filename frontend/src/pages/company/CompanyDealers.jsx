@@ -66,21 +66,49 @@ export default function CompanyDealers() {
     setSingleDealer({ name: "", phone: "", address: "", bpCode: "" });
   };
 
-  const paged = dealers.slice((page - 1) * pageSize, page * pageSize);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredDealers = dealers.filter((dealer) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      dealer.name?.toLowerCase().includes(query) ||
+      dealer.mobile?.toLowerCase().includes(query) ||
+      dealer.address?.toLowerCase().includes(query) ||
+      dealer.distributorID?.name?.toLowerCase().includes(query)
+    );
+  });
+
+  const paged = filteredDealers.slice((page - 1) * pageSize, page * pageSize);
+
+  const excelHeaders = ["Name", "Phone Number", "Address", "BP Code"];
 
   return (
     <div className="space-y-8">
-      <p className="text-sm uppercase tracking-[0.4em] text-gray-400">Dealers</p>
+      <p className="text-sm uppercase tracking-[0.4em] text-gray-500">Dealers</p>
       <div className="grid gap-6 lg:grid-cols-2">
-        <UploadCard
-          title="Bulk upload"
-          description="Use the dealer template to add members under a distributor."
-          icon="👥"
-          extraFields={[{ name: "bpCode", label: "Fallback Distributor BP Code" }]}
-          onSubmit={handleDealerUpload}
-          result={uploadResult}
-        />
-        <form onSubmit={handleSingleSubmit} className="space-y-4 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Bulk Upload</p>
+          <p className="text-sm text-gray-600 mb-4">Use the dealer template to add members under a distributor.</p>
+          <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+            <p className="text-xs font-semibold text-gray-700 mb-2">Required Excel Headers:</p>
+            <div className="flex flex-wrap gap-2">
+              {excelHeaders.map((header, idx) => (
+                <span key={idx} className="rounded-lg bg-white px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200">
+                  {header}
+                </span>
+              ))}
+            </div>
+          </div>
+          <UploadCard
+            title="Bulk upload"
+            description="Upload Excel file with dealer data."
+            icon="👥"
+            extraFields={[{ name: "bpCode", label: "Fallback Distributor BP Code" }]}
+            onSubmit={handleDealerUpload}
+            result={uploadResult}
+          />
+        </div>
+        <form onSubmit={handleSingleSubmit} className="space-y-4 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
           <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Single dealer</p>
           <div className="grid gap-4 md:grid-cols-2">
             {[
@@ -112,14 +140,28 @@ export default function CompanyDealers() {
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-100 border-t-transparent" />
         </div>
       ) : (
-        <div className="space-y-4 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <span>Total dealers</span>
-            <span>{formatNumber(dealers.length)}</span>
+        <div className="space-y-4 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>Total dealers</span>
+              <span className="ml-4">{formatNumber(filteredDealers.length)}</span>
+            </div>
+            <div className="flex-1 max-w-md ml-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search dealers..."
+                className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
+              />
+            </div>
           </div>
           <div className="grid gap-4">
             {paged.map((dealer) => (
-              <div key={dealer._id} className="flex flex-wrap items-center justify-between rounded-3xl border border-gray-100 bg-gray-50/80 px-4 py-3">
+              <div key={dealer._id} className="flex flex-wrap items-center justify-between rounded-3xl border border-gray-200 bg-gray-50 px-4 py-3">
                 <div>
                   <p className="font-semibold text-gray-900">{dealer.name}</p>
                   <p className="text-xs text-gray-500">{dealer.distributorID?.name || "—"}</p>
@@ -129,7 +171,7 @@ export default function CompanyDealers() {
               </div>
             ))}
           </div>
-          <Pagination page={page} pageSize={pageSize} total={dealers.length} onChange={setPage} />
+          <Pagination page={page} pageSize={pageSize} total={filteredDealers.length} onChange={setPage} />
         </div>
       )}
     </div>

@@ -51,11 +51,11 @@ export default function Layout({ children, user, setUser, setToken }) {
   const content = children ?? <Outlet />;
 
   return (
-    <div className="flex min-h-screen bg-[#08090c] text-white">
-      <aside className="hidden w-64 flex-col border-r border-white/5 bg-[#0c0d11] px-5 py-8 lg:flex">
+    <div className="flex min-h-screen bg-gray-50 text-gray-900">
+      <aside className="hidden w-64 flex-col border-r border-gray-200 bg-white px-5 py-8 lg:flex">
         <div className="mb-10 px-1">
           <p className="text-xs uppercase tracking-[0.5em] text-gray-500">SN Brothers</p>
-          <p className="text-2xl font-semibold text-white">Command Hub</p>
+          <p className="text-2xl font-semibold text-gray-900">Command Hub</p>
         </div>
         <nav className="space-y-2">
           {navItems.map((item) => (
@@ -66,8 +66,8 @@ export default function Layout({ children, user, setUser, setToken }) {
                 [
                   "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
                   isActive
-                    ? "bg-gradient-to-r from-white/10 to-white/5 text-white shadow-lg shadow-black/30"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    ? "bg-gradient-to-r from-[#c7a13f]/10 to-[#c7a13f]/5 text-gray-900 shadow-lg shadow-gray-200/50"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 ].join(" ")
               }
             >
@@ -77,13 +77,13 @@ export default function Layout({ children, user, setUser, setToken }) {
           ))}
         </nav>
         <div className="mt-auto space-y-3 pt-8">
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
             <p className="text-xs uppercase tracking-[0.4em] text-gray-400">Signed in</p>
-            <p className="text-sm font-semibold text-white">{user?.name || "—"}</p>
+            <p className="text-sm font-semibold text-gray-900">{user?.name || "—"}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-white/10 hover:text-white"
+            className="w-full rounded-2xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             Logout
           </button>
@@ -93,7 +93,7 @@ export default function Layout({ children, user, setUser, setToken }) {
       {/* Mobile Sidebar */}
       <button
         type="button"
-        className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-[#0b0c10] text-white shadow lg:hidden"
+        className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-300 bg-white text-gray-900 shadow lg:hidden"
         onClick={() => setSidebarOpen(true)}
       >
         ☰
@@ -101,7 +101,7 @@ export default function Layout({ children, user, setUser, setToken }) {
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 flex lg:hidden">
           <div className="flex-1 bg-black/60" onClick={() => setSidebarOpen(false)} />
-          <div className="w-72 bg-[#0b0c10] p-6 shadow-xl">
+          <div className="w-72 bg-white p-6 shadow-xl">
             <nav className="space-y-3">
               {navItems.map((item) => (
                 <NavLink
@@ -111,7 +111,7 @@ export default function Layout({ children, user, setUser, setToken }) {
                   className={({ isActive }) =>
                     [
                       "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
-                      isActive ? "bg-white/10 text-white" : "text-gray-400 hover:text-white"
+                      isActive ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:text-gray-900"
                     ].join(" ")
                   }
                 >
@@ -124,7 +124,7 @@ export default function Layout({ children, user, setUser, setToken }) {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col bg-gradient-to-br from-[#0f1014] via-[#111217] to-[#090a0d] text-gray-100">
+      <div className="flex flex-1 flex-col bg-gradient-to-br from-gray-50 via-white to-gray-50 text-gray-900">
         <main className="flex-1 px-4 py-8 md:px-10">
           <div className="mx-auto max-w-7xl">{content}</div>
         </main>

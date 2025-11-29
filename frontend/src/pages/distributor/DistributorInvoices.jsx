@@ -107,13 +107,13 @@ export default function DistributorInvoices() {
   const companyList = receivedInvoices.slice(0, 4);
 
   return (
-    <div className="space-y-8 text-white">
-      <header className="rounded-[32px] border border-white/10 bg-gradient-to-br from-[#08090c] via-[#101114] to-[#050506] p-8">
+    <div className="space-y-8">
+      <header className="rounded-[32px] border border-gray-200 bg-gradient-to-br from-white via-gray-50 to-white p-8 shadow-lg">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-gray-500">Invoices</p>
-            <h1 className="mt-3 text-3xl font-semibold text-white">Precision over every hand-off</h1>
-            <p className="mt-2 text-sm text-gray-400">
+            <h1 className="mt-3 text-3xl font-semibold text-gray-900">Precision over every hand-off</h1>
+            <p className="mt-2 text-sm text-gray-600">
               Segment between company allocations and dealer issues. Search, filter, and create invoices without leaving
               this screen.
             </p>
@@ -121,7 +121,7 @@ export default function DistributorInvoices() {
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center justify-center rounded-2xl border border-[#f5c66f]/60 bg-[#f5c66f] px-6 py-3 text-sm font-semibold text-gray-900 shadow-[0_10px_25px_rgba(245,198,111,0.35)] transition hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center rounded-2xl bg-[#c7a13f] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#b8912f] transition hover:-translate-y-0.5"
           >
             <span className="mr-2 text-lg">✦</span>
             Create invoice
@@ -135,20 +135,20 @@ export default function DistributorInvoices() {
         <MetricCard label="Invoices from company" value={formatNumber(receivedInvoices.length)} icon="🏢" />
       </div>
 
-      <section className="rounded-[28px] border border-white/10 bg-[#0b0c10] p-8">
+      <section className="rounded-[28px] border border-gray-200 bg-white p-8 shadow-sm">
         <div className="flex items-start justify-between gap-6">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">Invoices from Company</p>
-            <h2 className="mt-2 text-2xl font-semibold text-white">Recent hand-offs</h2>
-            <p className="mt-1 text-sm text-gray-400">Latest allocations received from HQ.</p>
+            <h2 className="mt-2 text-2xl font-semibold text-gray-900">Recent hand-offs</h2>
+            <p className="mt-1 text-sm text-gray-600">Latest allocations received from HQ.</p>
           </div>
-          <span className="text-3xl text-[#f5c66f]">⟲</span>
+          <span className="text-3xl text-[#c7a13f]">⟲</span>
         </div>
 
         {loading ? (
-          <div className="mt-6 h-28 rounded-2xl border border-white/10 bg-white/5 animate-pulse" />
+          <div className="mt-6 h-28 rounded-2xl border border-gray-200 bg-gray-50 animate-pulse" />
         ) : companyList.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-gray-400">
+          <div className="mt-6 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
             No invoices received from company yet.
           </div>
         ) : (
@@ -156,18 +156,18 @@ export default function DistributorInvoices() {
             {companyList.map((invoice) => (
               <article
                 key={invoice._id}
-                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur"
+                className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4"
               >
                 <div className="flex items-center justify-between text-sm">
                   <div>
-                    <p className="text-base font-semibold text-white">{invoice.fromUser?.name || "Company"}</p>
+                    <p className="text-base font-semibold text-gray-900">{invoice.fromUser?.name || "Company"}</p>
                     <p className="text-xs text-gray-500">
                       Invoice {invoice.invoiceNumber || invoice._id.slice(-6)} •{" "}
                       {new Date(invoice.invoiceDate || invoice.date).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-semibold text-[#f5c66f]">
+                    <p className="text-lg font-semibold text-[#c7a13f]">
                       {formatNumber(invoice.totalReward || 0)} pts
                     </p>
                     <p className="text-xs text-gray-500">
@@ -216,13 +216,13 @@ export default function DistributorInvoices() {
 
 function MetricCard({ label, value, icon }) {
   return (
-    <div className="rounded-[28px] border border-white/10 bg-[#0b0c10] p-6">
+    <div className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.35em] text-gray-500">{label}</p>
-          <p className="mt-3 text-3xl font-semibold text-white">{value}</p>
+          <p className="mt-3 text-3xl font-semibold text-gray-900">{value}</p>
         </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-lg">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 text-lg">
           {icon}
         </div>
       </div>
@@ -239,23 +239,23 @@ function InvoiceTable({ title, subtitle, data, filters, onFiltersChange, loading
   };
 
   return (
-    <section className="rounded-[28px] border border-white/10 bg-[#0b0c10] p-8 space-y-6">
+    <section className="rounded-[28px] border border-gray-200 bg-white p-8 space-y-6 shadow-sm">
       <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-semibold text-white">{title}</h2>
-        <p className="text-sm text-gray-400">{subtitle}</p>
+        <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
+        <p className="text-sm text-gray-600">{subtitle}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <label className="text-xs uppercase tracking-[0.3em] text-gray-500">
           Search
-          <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-400">
+          <div className="mt-2 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
             <span>🔍</span>
             <input
               name="query"
               value={filters.query}
               onChange={handleChange}
               placeholder="Invoice no, dealer"
-              className="flex-1 bg-transparent text-white placeholder:text-gray-500 focus:outline-none"
+              className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-500 focus:outline-none"
             />
           </div>
         </label>
@@ -266,7 +266,7 @@ function InvoiceTable({ title, subtitle, data, filters, onFiltersChange, loading
             name="from"
             value={filters.from}
             onChange={handleChange}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
           />
         </label>
         <label className="text-xs uppercase tracking-[0.3em] text-gray-500">
@@ -276,15 +276,15 @@ function InvoiceTable({ title, subtitle, data, filters, onFiltersChange, loading
             name="to"
             value={filters.to}
             onChange={handleChange}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
           />
         </label>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-white/10 text-sm">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-[0.3em] text-gray-500">
+            <tr className="text-left text-xs uppercase tracking-[0.3em] text-gray-500 bg-gray-50">
               <th className="px-4 py-3">Invoice</th>
               <th className="px-4 py-3">Counterparty</th>
               <th className="px-4 py-3">Items</th>
@@ -293,32 +293,32 @@ function InvoiceTable({ title, subtitle, data, filters, onFiltersChange, loading
               <th className="px-4 py-3">Date</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/10">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
+                <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
                   Loading invoices…
                 </td>
               </tr>
             ) : filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
+                <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               filteredRows.map((invoice) => (
-                <tr key={invoice._id} className="hover:bg-white/5">
-                  <td className="px-4 py-4 font-semibold text-white">
+                <tr key={invoice._id} className="hover:bg-gray-50">
+                  <td className="px-4 py-4 font-semibold text-gray-900">
                     {invoice.invoiceNumber || `#${invoice._id.slice(-6)}`}
                   </td>
-                  <td className="px-4 py-4 text-gray-300">
+                  <td className="px-4 py-4 text-gray-600">
                     {invoice.createdByRole === "Distributor" ? invoice.toUser?.name : invoice.fromUser?.name || "—"}
                   </td>
-                  <td className="px-4 py-4 text-gray-300">{invoice.items?.length || 0}</td>
-                  <td className="px-4 py-4 text-gray-300">{formatNumber(invoice.totalQty || 0)}</td>
-                  <td className="px-4 py-4 text-[#f5c66f]">{formatNumber(invoice.totalReward || 0)} pts</td>
-                  <td className="px-4 py-4 text-gray-300">
+                  <td className="px-4 py-4 text-gray-600">{invoice.items?.length || 0}</td>
+                  <td className="px-4 py-4 text-gray-600">{formatNumber(invoice.totalQty || 0)}</td>
+                  <td className="px-4 py-4 text-[#c7a13f] font-semibold">{formatNumber(invoice.totalReward || 0)} pts</td>
+                  <td className="px-4 py-4 text-gray-600">
                     {new Date(invoice.invoiceDate || invoice.date).toLocaleDateString()}
                   </td>
                 </tr>
@@ -372,20 +372,20 @@ function InvoiceDrawer({ onClose, onSubmit, products, dealers, loading }) {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/60 px-4 py-8">
-      <div className="w-full max-w-5xl rounded-[32px] border border-white/10 bg-[#0b0c10] p-8 shadow-2xl shadow-black/60">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="w-full max-w-5xl rounded-3xl border border-gray-200 bg-white p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-gray-500">Distributor → Dealer</p>
-            <h2 className="mt-2 text-3xl font-semibold text-white">New invoice</h2>
-            <p className="mt-2 text-sm text-gray-400">
+            <h2 className="mt-2 text-3xl font-semibold text-gray-900">New invoice</h2>
+            <p className="mt-2 text-sm text-gray-600">
               Select your dealer, add products, decide the rewards you want to pass along.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="h-11 w-11 rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
+            className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center"
           >
             ✕
           </button>
@@ -393,24 +393,24 @@ function InvoiceDrawer({ onClose, onSubmit, products, dealers, loading }) {
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
           <div className="grid gap-6 md:grid-cols-2">
-            <label className="text-sm font-medium text-gray-300">
+            <label className="text-sm font-medium text-gray-700">
               Dealer *
               <select
                 name="dealerId"
                 value={form.dealerId}
                 onChange={handleChange}
                 required
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none"
+                className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
               >
                 <option value="">Select dealer</option>
                 {dealers.map((dealer) => (
                   <option key={dealer._id} value={dealer._id}>
-                    {dealer.name} ({dealer.bpCode || "No BP"})
+                    {dealer.name} 
                   </option>
                 ))}
               </select>
             </label>
-            <label className="text-sm font-medium text-gray-300">
+            <label className="text-sm font-medium text-gray-700">
               Invoice date *
               <input
                 type="date"
@@ -418,10 +418,10 @@ function InvoiceDrawer({ onClose, onSubmit, products, dealers, loading }) {
                 value={form.invoiceDate}
                 onChange={handleChange}
                 required
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none"
+                className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
               />
             </label>
-            <label className="text-sm font-medium text-gray-300">
+            <label className="text-sm font-medium text-gray-700">
               Invoice number
               <input
                 type="text"
@@ -429,10 +429,10 @@ function InvoiceDrawer({ onClose, onSubmit, products, dealers, loading }) {
                 value={form.invoiceNumber}
                 onChange={handleChange}
                 placeholder="Optional"
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none"
+                className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
               />
             </label>
-            <label className="text-sm font-medium text-gray-300">
+            <label className="text-sm font-medium text-gray-700">
               Reward points
               <input
                 type="number"
@@ -441,12 +441,12 @@ function InvoiceDrawer({ onClose, onSubmit, products, dealers, loading }) {
                 value={form.rewardPoints}
                 onChange={handleChange}
                 placeholder={`Default: ${formatNumber(Math.round(summary.totalReward))}`}
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none"
+                className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
               />
             </label>
           </div>
 
-          <label className="text-sm font-medium text-gray-300">
+          <label className="text-sm font-medium text-gray-700">
             Notes
             <textarea
               name="notes"
@@ -454,15 +454,15 @@ function InvoiceDrawer({ onClose, onSubmit, products, dealers, loading }) {
               onChange={handleChange}
               rows={3}
               placeholder="Dealer specific instructions…"
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none"
+              className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#c7a13f]/20 focus:border-[#c7a13f]"
             />
           </label>
 
-          <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+          <div className="rounded-[28px] border border-gray-200 bg-gray-50 p-6">
             <ProductSelector products={products} items={items} onChange={setItems} />
           </div>
 
-          <div className="rounded-[28px] border border-[#f5c66f]/20 bg-[#0c0d11] p-6 text-sm text-gray-200">
+          <div className="rounded-[28px] border border-[#c7a13f]/30 bg-gray-50 p-6 text-sm text-gray-700">
             <div className="flex flex-wrap items-center gap-4">
               <span>
                 Items: <strong>{summary.totalItems}</strong>
@@ -480,14 +480,14 @@ function InvoiceDrawer({ onClose, onSubmit, products, dealers, loading }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-gray-300 hover:bg-white/5"
+              className="rounded-2xl border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !form.dealerId || !items.length}
-              className="rounded-2xl border border-transparent bg-[#f5c66f] px-6 py-3 text-sm font-semibold text-gray-900 disabled:cursor-not-allowed disabled:bg-[#b79b60]"
+              className="rounded-2xl border border-transparent bg-[#c7a13f] px-6 py-3 text-sm font-semibold text-white hover:bg-[#b8912f] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Sharing…" : "Share invoice"}
             </button>

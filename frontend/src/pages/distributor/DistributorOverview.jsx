@@ -39,19 +39,19 @@ export default function DistributorOverview() {
   const featuredProducts = products.slice(0, 4);
 
   return (
-    <div className="space-y-10 text-white">
-      <header className="rounded-[32px] border border-white/10 bg-gradient-to-br from-[#0c0d11] via-[#111217] to-[#070709] p-10 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
+    <div className="space-y-10">
+      <header className="rounded-[32px] border border-gray-200 bg-gradient-to-br from-white via-gray-50 to-white p-10 shadow-lg">
         <p className="text-xs uppercase tracking-[0.4em] text-gray-500">Distributor</p>
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-4xl font-semibold text-white">Command your network</h1>
-            <p className="mt-3 text-sm text-gray-400">
+            <h1 className="text-4xl font-semibold text-gray-900">Command your network</h1>
+            <p className="mt-3 text-sm text-gray-600">
               Real-time clarity on wallet health, dealer reach, and the allocations that keep your region moving.
             </p>
           </div>
-          <div className="rounded-3xl border border-[#f5c66f]/30 bg-[#111217] px-8 py-6 text-right">
+          <div className="rounded-3xl border border-[#c7a13f]/30 bg-gray-50 px-8 py-6 text-right">
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">My dealers</p>
-            <p className="mt-2 text-5xl font-semibold text-white">{formatNumber(dealers.length)}</p>
+            <p className="mt-2 text-5xl font-semibold text-gray-900">{formatNumber(dealers.length)}</p>
           </div>
         </div>
       </header>
@@ -74,14 +74,14 @@ export default function DistributorOverview() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-[28px] border border-white/10 bg-[#0b0c10] p-8">
+        <section className="rounded-[28px] border border-gray-200 bg-white p-8 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-gray-500">Dealer pulse</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">My Dealers</h2>
-              <p className="mt-1 text-sm text-gray-400">Quick snapshot of the partners you interact with most.</p>
+              <h2 className="mt-2 text-2xl font-semibold text-gray-900">My Dealers</h2>
+              <p className="mt-1 text-sm text-gray-600">Quick snapshot of the partners you interact with most.</p>
             </div>
-            <span className={`text-3xl ${goldAccent}`}>✦</span>
+            <span className="text-3xl text-[#c7a13f]">✦</span>
           </div>
 
           {loading ? (
@@ -93,12 +93,12 @@ export default function DistributorOverview() {
               {featuredDealers.map((dealer) => (
                 <article
                   key={dealer._id}
-                  className="rounded-2xl border border-white/5 bg-white/5 px-5 py-4 backdrop-blur"
+                  className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-lg font-medium text-white">{dealer.name || "Dealer"}</p>
-                      <p className="text-sm text-gray-400">{dealer.companyName || dealer.businessType || "—"}</p>
+                      <p className="text-lg font-medium text-gray-900">{dealer.name || "Dealer"}</p>
+                      <p className="text-sm text-gray-600">{dealer.address || dealer.businessType || "—"}</p>
                     </div>
                     <div className="text-right text-sm text-gray-500">
                       <p>{dealer.mobile || "N/A"}</p>
@@ -111,14 +111,14 @@ export default function DistributorOverview() {
           )}
         </section>
 
-        <section className="rounded-[28px] border border-white/10 bg-[#0b0c10] p-8">
+        <section className="rounded-[28px] border border-gray-200 bg-white p-8 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-gray-500">Allocation radar</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Primary SKUs</h2>
-              <p className="mt-1 text-sm text-gray-400">Last received allocations and their current balance.</p>
+              <h2 className="mt-2 text-2xl font-semibold text-gray-900">Primary SKUs</h2>
+              <p className="mt-1 text-sm text-gray-600">Last received allocations and their current balance.</p>
             </div>
-            <span className={`text-3xl ${goldAccent}`}>📦</span>
+            <span className="text-3xl text-[#c7a13f]">📦</span>
           </div>
 
           {loading ? (
@@ -130,17 +130,17 @@ export default function DistributorOverview() {
               {featuredProducts.map((product) => (
                 <article
                   key={product._id}
-                  className="rounded-2xl border border-white/5 bg-white/5 px-5 py-4 backdrop-blur"
+                  className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-lg font-medium text-white">
+                      <p className="text-lg font-medium text-gray-900">
                         {product.itemDescription || product.name || "Product"}
                       </p>
-                      <p className="text-xs tracking-widest text-gray-400">{product.itemNo || "—"}</p>
+                      <p className="text-xs tracking-widest text-gray-500">{product.itemNo || "—"}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-semibold text-white">
+                      <p className="text-2xl font-semibold text-gray-900">
                         {formatNumber(product?.allocation?.qty || 0)}
                       </p>
                       <p className="text-xs text-gray-500">{product?.allocation?.uom || "Units"} available</p>
@@ -159,19 +159,19 @@ export default function DistributorOverview() {
 function SummaryCard({ loading, title, value, subtitle, icon }) {
   if (loading) {
     return (
-      <div className="h-40 rounded-[28px] border border-white/10 bg-[#0b0c10] animate-pulse" />
+      <div className="h-40 rounded-[28px] border border-gray-200 bg-white animate-pulse" />
     );
   }
 
   return (
-    <section className="rounded-[28px] border border-white/10 bg-gradient-to-br from-[#111217] to-[#08090c] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+    <section className="rounded-[28px] border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-8 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-gray-500">{title}</p>
-          <p className="mt-4 text-4xl font-semibold text-white">{value}</p>
-          <p className="mt-2 text-sm text-gray-400">{subtitle}</p>
+          <p className="mt-4 text-4xl font-semibold text-gray-900">{value}</p>
+          <p className="mt-2 text-sm text-gray-600">{subtitle}</p>
         </div>
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-2xl">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 text-2xl">
           {icon}
         </div>
       </div>
@@ -182,14 +182,14 @@ function SummaryCard({ loading, title, value, subtitle, icon }) {
 const SkeletonList = () => (
   <div className="mt-6 space-y-4">
     {[0, 1, 2].map((key) => (
-      <div key={key} className="h-16 rounded-2xl border border-white/5 bg-white/5 animate-pulse" />
+      <div key={key} className="h-16 rounded-2xl border border-gray-200 bg-gray-50 animate-pulse" />
     ))}
   </div>
 );
 
 function EmptyState({ message }) {
   return (
-    <div className="mt-8 rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-gray-400">
+    <div className="mt-8 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
       {message}
     </div>
   );

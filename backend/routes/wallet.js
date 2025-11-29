@@ -6,7 +6,8 @@ import {
   getAllWallets,
   getWalletSummary,
   companyDeductDistributor,
-  distributorDeductDealer
+  distributorDeductDealer,
+  companyDeductDealer
 } from "../controllers/walletController.js";
 
 const router = express.Router();
@@ -16,7 +17,9 @@ router.get("/transactions", authMiddleware(), getWalletTransactions);
 router.get("/admin/all", authMiddleware(["Company"]), getAllWallets);
 router.get("/admin/summary", authMiddleware(["Company"]), getWalletSummary);
 router.post("/admin/deduct-distributor", authMiddleware(["Company"]), companyDeductDistributor);
+router.post("/admin/deduct-dealer", authMiddleware(["Company"]), companyDeductDealer);
 router.post("/deduct-dealer", authMiddleware(["Distributor"]), distributorDeductDealer);
 
 export default router;
+
 

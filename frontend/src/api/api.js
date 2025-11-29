@@ -44,6 +44,9 @@ export const createDistributor = (distributorData) =>
 export const createDealer = (dealerData) => 
   api.post("/users/dealers", dealerData);
 
+export const updateDealer = (id, dealerData) => 
+  api.put(`/users/dealers/${id}`, dealerData);
+
 export const getDistributors = () => 
   api.get("/users/distributors");
 
@@ -103,6 +106,9 @@ export const getWalletSummary = () =>
 // Manual deduction APIs
 export const companyDeductDistributor = (distributorId, points, note) =>
   api.post("/wallets/admin/deduct-distributor", { distributorId, points, note });
+
+export const companyDeductDealer = (dealerId, points, note) =>
+  api.post("/wallets/admin/deduct-dealer", { dealerId, points, note });
 
 export const distributorDeductDealer = (dealerId, points, note) =>
   api.post("/wallets/deduct-dealer", { dealerId, points, note });

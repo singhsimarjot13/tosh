@@ -4,7 +4,8 @@ import {
   loginCompany, 
   loginWithPhone,
   createDistributor, 
-  createDealer,  
+  createDealer,
+  updateDealer,
   getAllDealers, 
   getProfile, 
   logout 
@@ -146,6 +147,7 @@ router.get(
 
 // Distributor routes
 router.post("/dealers", authMiddleware(["Distributor"]), createDealer);
+router.put("/dealers/:id", authMiddleware(["Distributor", "Company"]), updateDealer);
 router.get("/my-dealers", authMiddleware(["Company", "Distributor"]), async (req, res) => {
   try {
     let dealers;
